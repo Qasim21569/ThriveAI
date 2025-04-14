@@ -77,8 +77,14 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
     // Define our headers and request options for OpenRouter
     const apiToken = process.env.OPENROUTER_API_KEY;
     console.log("API Token available:", !!apiToken);
+    console.log("API Token first 10 chars:", apiToken?.substring(0, 10));
+    console.log("API Token length:", apiToken?.length);
     const model = process.env.OPENROUTER_MODEL || 'mistralai/mistral-7b-instruct:free';
     console.log("Using model:", model);
+
+    // Verify we're in a valid environment
+    console.log("Environment:", process.env.NODE_ENV);
+    console.log("Site URL:", process.env.NEXT_PUBLIC_SITE_URL);
 
     // Improved logging around fetch request
     try {
@@ -86,8 +92,8 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiToken}`,
-          'HTTP-Referer': 'http://localhost:3000',
+          'Authorization': `Bearer ${apiToken?.trim()}`, // Ensure no whitespace
+          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://thriveai-three.vercel.app/',
           'X-Title': 'AI Life Coach'
         },
         body: JSON.stringify({
