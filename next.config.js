@@ -9,7 +9,6 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ["localhost:3000", "localhost:3003"]
     },
-    optimizeCss: true,       // Enable CSS optimization
     optimizePackageImports: ['framer-motion', '@mui/material', '@mui/icons-material'],
   },
   
@@ -51,6 +50,15 @@ const nextConfig = {
         net: false,
         tls: false,
         encoding: false
+      };
+    }
+    
+    // Fix Three.js version incompatibility
+    if (!isServer) {
+      // Resolve THREE to a single version to avoid conflicts
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'three': require.resolve('three')
       };
     }
     

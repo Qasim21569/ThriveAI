@@ -1,35 +1,50 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import dynamic from 'next/dynamic';
 import ClientLayout from './client-layout';
 import { SafeComponent } from '@/components/ui/safe-component';
 
 // Simple loading component
-const LoadingFallback = () => (
+const LoadingFallback = memo(() => (
   <div className="p-4 text-center text-white/50">
     Loading...
   </div>
-);
+));
 
-// Always use reducedIntensity for background animations to improve performance
-const BackgroundAnimation = dynamic(
-  () => import('@/components/landing/background-animation').then(mod => ({
-    default: (props) => <mod.BackgroundAnimation {...props} reducedIntensity={true} />
-  })),
-  { ssr: false, loading: () => <div className="fixed inset-0 bg-[#0A0A1F]"></div> }
-);
+// Static background effect - no animations or Three.js
+const StaticBackground = memo(() => (
+  <div className="fixed inset-0 pointer-events-none overflow-hidden z-[1]">
+    {/* Simple gradient background */}
+    <div className="absolute inset-0 bg-gradient-to-b from-violet-950/20 to-background opacity-50"></div>
+    <div className="absolute inset-0" style={{background: 'radial-gradient(circle at center, transparent 40%, rgba(10, 0, 30, 0.4) 100%)', opacity: 0.7}}></div>
+    
+    {/* Static star field - no animation */}
+    <div className="absolute inset-0">
+      {Array.from({ length: 50 }).map((_, i) => (
+        <div 
+          key={i}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${Math.random() * 2 + 1}px`,
+            height: `${Math.random() * 2 + 1}px`,
+            opacity: Math.random() * 0.5 + 0.1,
+          }}
+        />
+      ))}
+    </div>
+  </div>
+));
 
-const StarsBackground = dynamic(
-  () => import('@/components/landing/stars-background').then(mod => ({ default: mod.StarsBackground })),
-  { ssr: false, loading: () => null }
-);
-
+// Static components that don't need animations
 const Navbar = dynamic(
   () => import('@/components/landing/navbar').then(mod => mod.Navbar),
   { ssr: false, loading: () => <div className="h-16 w-full"></div> }
 );
 
+// Lazily load the heavy components
 const HeroSection = dynamic(
   () => import('@/components/landing/hero-section').then(mod => mod.HeroSection),
   { ssr: false, loading: () => <LoadingFallback /> }
@@ -40,13 +55,26 @@ const ModeCards = dynamic(
   { ssr: false, loading: () => <LoadingFallback /> }
 );
 
+// Load content in chunks for better performance
+const ContentChunk = memo(({ children }: { children: React.ReactNode }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  if (!isVisible) return <LoadingFallback />;
+  
+  return <>{children}</>;
+});
+
+// Lazily load lower priority sections
 const FeaturesSection = dynamic(
   () => import('@/components/landing/features-section').then(mod => mod.FeaturesSection),
-  { ssr: false, loading: () => <LoadingFallback /> }
-);
-
-const TestimonialsSection = dynamic(
-  () => import('@/components/landing/testimonials-section').then(mod => mod.TestimonialsSection),
   { ssr: false, loading: () => <LoadingFallback /> }
 );
 
@@ -55,37 +83,20 @@ const Footer = dynamic(
   { ssr: false, loading: () => <LoadingFallback /> }
 );
 
+// Main component with optimizations
 export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showFullBackground, setShowFullBackground] = useState(false);
   
   useEffect(() => {
-    // Staged loading approach for better performance
-    const initialTimer = setTimeout(() => {
+    // Basic loading
+    const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 300); 
-    
-    // Delay full background effects even more
-    const backgroundTimer = setTimeout(() => {
-      setShowFullBackground(true);
-    }, 1500);
+    }, 300);
     
     return () => {
-      clearTimeout(initialTimer);
-      clearTimeout(backgroundTimer);
+      clearTimeout(timer);
     };
   }, []);
-
-  // Create error-safe loading for component sections
-  const renderComponent = (Component: React.ComponentType<any>, priority = false) => {
-    if (!isLoaded && !priority) return <LoadingFallback />;
-    
-    return (
-      <SafeComponent fallback={<LoadingFallback />}>
-        <Component />
-      </SafeComponent>
-    );
-  };
 
   return (
     <ClientLayout>
@@ -93,39 +104,36 @@ export default function HomePage() {
         {/* Static background */}
         <div className="fixed inset-0 bg-[#0A0A1F] z-[-2]"></div>
         
-        {/* Only show 3D stars when fully loaded */}
-        {showFullBackground && (
-          <SafeComponent>
-            <StarsBackground />
-          </SafeComponent>
-        )}
+        {/* Simple static background */}
+        {isLoaded && <StaticBackground />}
         
-        {/* Always show background animations but with reduced intensity */}
-        {isLoaded && (
-          <SafeComponent>
-            <BackgroundAnimation />
-          </SafeComponent>
-        )}
-        
-        {/* Navbar - prioritized loading */}
-        {renderComponent(Navbar, true)}
+        {/* Prioritized navbar */}
+        <Navbar />
 
         <main className="flex-1">
-          {/* Hero Section - prioritized */}
-          {renderComponent(HeroSection, true)}
+          {/* Hero section - always visible */}
+          <ContentChunk>
+            <HeroSection />
+          </ContentChunk>
           
-          {/* Mode Cards - main coaching options */}
-          {renderComponent(ModeCards)}
+          {/* Mode cards - always visible */}
+          <ContentChunk>
+            <ModeCards />
+          </ContentChunk>
           
-          {/* Features Section */}
-          {renderComponent(FeaturesSection)}
-          
-          {/* Testimonials Section */}
-          {renderComponent(TestimonialsSection)}
+          {/* Lower priority sections */}
+          {isLoaded && (
+            <>
+              <ContentChunk>
+                <FeaturesSection />
+              </ContentChunk>
+              
+              <ContentChunk>
+                <Footer />
+              </ContentChunk>
+            </>
+          )}
         </main>
-      
-        {/* Footer */}
-        {renderComponent(Footer)}
       </div>
     </ClientLayout>
   );

@@ -323,24 +323,25 @@
   background: #5931e6;
 }
 
-/* Smooth Scroll Behavior */
+/* Smooth Scroll Behavior - disabled for performance */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto !important;
 }
 
 /* Base Styles */
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
-    135deg,
-    rgb(var(--background-start-rgb)),
+    to bottom,
+    transparent,
     rgb(var(--background-end-rgb))
-  );
-  font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv03" on;
+  )
+  rgb(var(--background-start-rgb));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   min-height: 100vh;
+  text-rendering: optimizeSpeed;
 }
 
 /* Button Styles */
@@ -533,5 +534,90 @@ body {
 
   .wave-bg {
     height: 120px;
+  }
+}
+
+/* Twinkle animation for stars */
+@keyframes twinkle {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+/* Additional performance optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent repaints/reflows on hover */
+a, button, .hover-effect {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transition: opacity 0.2s ease;
+}
+
+/* Force hardware acceleration on animations */
+.animate-gpu,
+.animate-pulse,
+.animate-spin,
+.animate-bounce {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Prevent layout shifts */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Optimize GPU rendering */
+.fixed, 
+.sticky, 
+.absolute,
+.backdrop-blur,
+.bg-blur,
+.glass,
+.motion-safe\:animate-pulse,
+.motion-safe\:animate-spin,
+.motion-safe\:animate-bounce,
+.motion-safe\:animate-ping {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Reduce animation intensity */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-safe\:animate-pulse {
+    animation-duration: 3s !important;
+  }
+  
+  .motion-safe\:animate-spin {
+    animation-duration: 3s !important;
+  }
+  
+  .motion-safe\:animate-bounce {
+    animation-duration: 1.5s !important;
+  }
+  
+  .motion-safe\:animate-ping {
+    animation-duration: 1.5s !important;
+  }
+}
+
+/* Disable animations on scroll for better performance */
+@media (max-width: 1024px) {
+  .animate-on-scroll {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }

@@ -75,11 +75,10 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
     console.log("Sending prompt to OpenRouter:", prompt);
 
     // Define our headers and request options for OpenRouter
-    const apiToken = process.env.OPENROUTER_API_KEY;
+    const apiToken = process.env.OPENROUTER_API_KEY?.trim();
     console.log("API Token available:", !!apiToken);
     console.log("API Token first 10 chars:", apiToken?.substring(0, 10));
-    console.log("API Token length:", apiToken?.length);
-    const model = process.env.OPENROUTER_MODEL || 'mistralai/mistral-7b-instruct:free';
+    const model = process.env.OPENROUTER_MODEL?.trim() || 'mistralai/mistral-7b-instruct:free';
     console.log("Using model:", model);
 
     // Verify we're in a valid environment
@@ -88,21 +87,37 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
 
     // Improved logging around fetch request
     try {
+      if (!apiToken) {
+        console.error("No API token found - cannot make OpenRouter request");
+        throw new Error("OpenRouter API key is missing");
+      }
+
+      // Format the headers properly for OpenRouter
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiToken}`,
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://thriveai-three.vercel.app',
+        'X-Title': 'AI Life Coach'
+      };
+      
+      console.log("Using headers:", JSON.stringify({
+        'Content-Type': headers['Content-Type'],
+        'Authorization': 'Bearer [REDACTED]',
+        'HTTP-Referer': headers['HTTP-Referer'],
+        'X-Title': headers['X-Title']
+      }));
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiToken?.trim()}`, // Ensure no whitespace
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://thriveai-three.vercel.app/',
-          'X-Title': 'AI Life Coach'
-        },
+        headers: headers,
         body: JSON.stringify({
           model: model,
           messages: [
             { role: 'user', content: prompt }
           ],
           max_tokens: 1200,
-          temperature: 0.7
+          temperature: 0.7,
+          route: "fallback" // Add a fallback route option
         })
       });
 
