@@ -198,354 +198,337 @@ function createFitnessPlanPrompt(formData: any): string {
     fitnessLevel,
     fitnessGoals,
     healthConditions,
+    dietaryPreferences,
     dietaryRestrictions,
-    availableEquipment,
-    timeCommitment,
-    preferredActivities,
-    dislikedActivities,
-    injuries,
-    additionalInfo
+    workoutFrequency,
+    workoutDuration,
+    sleepHours,
+    stressLevel,
+    equipmentAccess
   } = formData;
 
-  // Generate a random seed to ensure unique results
-  const seed = Math.floor(Math.random() * 10000);
+  // Calculate BMI if height and weight are provided
+  let bmi = '';
+  if (height && weight) {
+    // Convert height to meters if in cm
+    const heightInMeters = height > 3 ? height / 100 : height;
+    const bmiValue = weight / (heightInMeters * heightInMeters);
+    bmi = `BMI: ${bmiValue.toFixed(1)} (${getBMICategory(bmiValue)})`;
+  }
 
-  return `Create a compact personalized fitness plan as a valid JSON object for a person with the following details:
+  return `
+Create a personalized fitness plan in JSON format based on the following information:
 
-Age: ${age || "Not specified"}
-Gender: ${gender || "Not specified"}
-Height: ${height || "Not specified"}
-Weight: ${weight || "Not specified"}
-Fitness Level: ${fitnessLevel || "Beginner"}
-Fitness Goals: ${fitnessGoals || "General fitness improvement"}
-Health Conditions: ${healthConditions || "None"}
-Dietary Restrictions: ${dietaryRestrictions || "None"}
-Available Equipment: ${availableEquipment || "Basic home equipment"}
-Time Commitment: ${timeCommitment || "3-4 hours per week"}
-Preferred Activities: ${preferredActivities || "Various exercises"}
-Disliked Activities: ${dislikedActivities || "None specified"}
-Injuries: ${injuries || "None"}
-Additional Info: ${additionalInfo || "None provided"}
+User Profile:
+- Age: ${age || 'Not specified'}
+- Gender: ${gender || 'Not specified'}
+- Height: ${height || 'Not specified'}
+- Weight: ${weight || 'Not specified'}
+- ${bmi}
+- Current Fitness Level: ${fitnessLevel || 'Not specified'}
+- Fitness Goals: ${fitnessGoals || 'Not specified'}
+- Health Conditions/Limitations: ${healthConditions || 'None'}
+- Dietary Preferences: ${dietaryPreferences || 'Not specified'}
+- Dietary Restrictions: ${dietaryRestrictions || 'None'}
+- Workout Frequency Preference: ${workoutFrequency || 'Not specified'} times per week
+- Workout Duration Preference: ${workoutDuration || 'Not specified'} minutes
+- Sleep Hours: ${sleepHours || 'Not specified'} hours per night
+- Stress Level: ${stressLevel || 'Not specified'}
+- Equipment Access: ${equipmentAccess || 'Not specified'}
 
-The fitness plan should include:
-1. Diet with meals and recommendations (be concise but useful)
-2. Three workout routines with exercises, sets, and reps 
-3. Weekly routine (keep it brief)
-4. Goals and metrics
+Requirements:
+1. Create a comprehensive fitness plan tailored to this individual's profile.
+2. Include dietary recommendations with meal suggestions.
+3. Design appropriate workouts with exercise details.
+4. Set realistic short-term and long-term goals.
+5. Create a weekly routine that balances different types of exercise.
+6. Include recommendations for recovery and sustainability.
+7. If there are health conditions, ensure the plan is safe and appropriate.
+8. Respect dietary preferences and restrictions.
 
-IMPORTANT: 
-- Be creative and generate a unique plan (seed #${seed})
-- Keep the response VERY COMPACT to fit in token limits
-- Using numerical values for sets and reps is fine
-- Lists should be brief but descriptive
-- All properties must have string values, including numbers (example: "sets": "3" not "sets": 3)
-
-Provide ONLY a properly formatted JSON object matching this structure:
-
+The response MUST be valid JSON that matches this structure:
 {
   "diet": {
     "meals": [
-      {"name": "string", "description": "string", "time": "string"}
+      {
+        "name": "Breakfast Example",
+        "description": "Detailed description of the meal",
+        "time": "7:00 AM"
+      }
     ],
-    "recommendations": ["string", "string"],
-    "restrictions": ["string"]
+    "recommendations": ["List of dietary recommendations"],
+    "restrictions": ["List of dietary restrictions to follow"]
   },
   "workouts": [
     {
-      "name": "string",
-      "description": "string",
-      "duration": "string",
+      "name": "Workout Name",
+      "description": "Description of the workout",
+      "duration": "45 minutes",
       "exercises": [
-        {"name": "string", "sets": "string", "reps": "string", "notes": "string"}
+        {
+          "name": "Exercise Name",
+          "sets": "3",
+          "reps": "12",
+          "notes": "Optional notes about form or alternatives"
+        }
       ]
     }
   ],
   "goals": {
-    "short_term": ["string"],
-    "long_term": ["string"],
-    "metrics": {"key": "value"}
+    "short_term": ["List of short-term goals"],
+    "long_term": ["List of long-term goals"],
+    "metrics": {
+      "weight": "Target weight",
+      "bodyFat": "Target body fat percentage",
+      "other_relevant_metrics": "values"
+    }
   },
   "weekly_routine": {
-    "monday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"}
-  }
-}`;
+    "monday": {
+      "workouts": ["Names of Monday workouts"],
+      "nutrition": "Special nutrition focus for Monday",
+      "recovery": "Recovery activities for Monday"
+    },
+    ... other days of the week
+  },
+  "recommendations": ["Additional recommendations"],
+  "notes": ["Important notes about the plan"]
+}
+
+Important: Ensure the plan is realistic, sustainable, and tailored to the individual's specific needs. Provide clear, actionable advice that can be followed without professional supervision. If there are any health concerns, recommend consulting with a healthcare professional.
+`;
 }
 
 /**
- * Clean JSON string by removing any text before the first '{' and after the last '}'
+ * Helper function to get BMI category
  */
-function cleanJSONString(text: string): string {
-  // Find the first '{' and last '}'
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  
-  if (firstBrace === -1 || lastBrace === -1) {
-    return text; // No JSON object found, return original
-  }
-  
-  // Extract just the JSON part
-  return text.substring(firstBrace, lastBrace + 1);
+function getBMICategory(bmi: number): string {
+  if (bmi < 18.5) return 'Underweight';
+  if (bmi < 25) return 'Normal weight';
+  if (bmi < 30) return 'Overweight';
+  return 'Obesity';
 }
 
 /**
- * Complete and fix truncated JSON
+ * Clean up a JSON string to fix common issues
  */
-function completeJSON(text: string): string {
-  let jsonText = text;
+function cleanJSONString(str: string): string {
+  // Escape backslashes
+  let cleaned = str;
   
-  // Count opening and closing braces
-  const openBraces = (jsonText.match(/{/g) || []).length;
-  const closeBraces = (jsonText.match(/}/g) || []).length;
-  const openBrackets = (jsonText.match(/\[/g) || []).length;
-  const closeBrackets = (jsonText.match(/\]/g) || []).length;
+  // Extract JSON if it's wrapped in markdown code blocks
+  const jsonRegex = /```(?:json)?\s*({[\s\S]*?})\s*```/;
+  const match = str.match(jsonRegex);
   
-  // Fix quotes around property names with numbers
-  jsonText = jsonText.replace(/"([^"]+)"(\d+)":/g, '"$1$2":');
-  
-  // Fix missing quotes around values with parentheses
-  jsonText = jsonText.replace(/:\s*(\d+)\s*\((.*?)\)/g, ': "$1 ($2)"');
-  
-  // Fix missing quotes around numerical values
-  jsonText = jsonText.replace(/:\s*(\d+)([,}])/g, ': "$1"$2');
-  
-  // Remove trailing commas that might cause parsing issues
-  jsonText = jsonText.replace(/,(\s*[\]}])/g, '$1');
-  
-  // Add missing closing brackets
-  for (let i = 0; i < openBrackets - closeBrackets; i++) {
-    jsonText += ']';
+  if (match && match[1]) {
+    cleaned = match[1];
   }
   
-  // Add missing closing braces
-  for (let i = 0; i < openBraces - closeBraces; i++) {
-    jsonText += '}';
+  // Remove any leading/trailing non-JSON content
+  const jsonStartRegex = /^[^{]*(({[\s\S]*)/;
+  const startMatch = cleaned.match(jsonStartRegex);
+  if (startMatch) {
+    cleaned = startMatch[1];
   }
   
-  return jsonText;
+  const jsonEndRegex = /([\s\S]*})[^}]*$/;
+  const endMatch = cleaned.match(jsonEndRegex);
+  if (endMatch) {
+    cleaned = endMatch[1];
+  }
+  
+  return cleaned;
 }
 
 /**
- * Generate a fallback fitness plan
+ * Attempt to repair incomplete JSON
+ */
+function completeJSON(str: string): string {
+  try {
+    // Count opening and closing braces, brackets
+    const openBraces = (str.match(/{/g) || []).length;
+    const closeBraces = (str.match(/}/g) || []).length;
+    const openBrackets = (str.match(/\[/g) || []).length;
+    const closeBrackets = (str.match(/\]/g) || []).length;
+    
+    let fixed = str;
+    
+    // Add missing closing braces
+    for (let i = 0; i < openBraces - closeBraces; i++) {
+      fixed += '}';
+    }
+    
+    // Add missing closing brackets
+    for (let i = 0; i < openBrackets - closeBrackets; i++) {
+      fixed += ']';
+    }
+    
+    // Fix common JSON syntax errors
+    fixed = fixed
+      // Fix trailing commas before closing brackets/braces
+      .replace(/,\s*}/g, '}')
+      .replace(/,\s*]/g, ']')
+      // Fix missing quotes around property names
+      .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3')
+      // Fix unquoted string values
+      .replace(/:(\s*)([a-zA-Z0-9_]+)([,}])/g, ':"$2"$3');
+    
+    return fixed;
+  } catch (e) {
+    console.error("Error while trying to complete JSON:", e);
+    return str;
+  }
+}
+
+/**
+ * Generate a fallback fitness plan when the API fails
  */
 function generateFallbackPlan(formData: any): FitnessPlan {
-  const { fitnessLevel, fitnessGoals, healthConditions, preferredActivities } = formData;
+  const {
+    fitnessGoals = "Improve overall fitness",
+    healthConditions = "",
+    dietaryPreferences = "",
+    dietaryRestrictions = "",
+    fitnessLevel = "Beginner"
+  } = formData;
   
-  console.log("Generating fallback fitness plan");
+  const isLowImpact = healthConditions.toLowerCase().includes('injury') || 
+                       healthConditions.toLowerCase().includes('pain') ||
+                       healthConditions.toLowerCase().includes('arthritis');
   
-  // Add some randomization to make it seem different each time
-  const planVariation = Math.floor(Math.random() * 3) + 1;
+  const workoutIntensity = fitnessLevel.toLowerCase() === 'beginner' ? 'Low' : 
+                           fitnessLevel.toLowerCase() === 'intermediate' ? 'Moderate' : 'High';
   
   return {
     diet: {
       meals: [
         {
-          name: "Protein Breakfast",
-          description: planVariation === 1 ? "Eggs, oatmeal, and fruit" : (planVariation === 2 ? "Greek yogurt with berries and nuts" : "Protein smoothie with banana and spinach"),
+          name: "Balanced Breakfast",
+          description: "Oatmeal with fruits, nuts, and a side of protein (eggs or yogurt)",
           time: "7:00 AM"
         },
         {
-          name: "Morning Snack",
-          description: "Protein shake or fruit",
-          time: "10:00 AM"
+          name: "Midday Meal",
+          description: "Lean protein with vegetables and complex carbohydrates",
+          time: "12:00 PM"
         },
         {
-          name: "Balanced Lunch",
-          description: planVariation === 1 ? "Grilled chicken with vegetables" : (planVariation === 2 ? "Tuna salad with mixed greens" : "Quinoa bowl with beans and vegetables"),
-          time: "1:00 PM"
-        },
-        {
-          name: "Afternoon Snack",
-          description: "Greek yogurt with berries",
-          time: "4:00 PM"
-        },
-        {
-          name: "Protein-focused Dinner",
-          description: planVariation === 1 ? "Grilled fish with quinoa" : (planVariation === 2 ? "Lean beef with sweet potatoes" : "Tofu stir-fry with brown rice"),
-          time: "7:00 PM"
+          name: "Evening Meal",
+          description: "Lean protein, vegetables, and healthy fats",
+          time: "6:30 PM"
         }
       ],
       recommendations: [
-        "Increase protein intake to support muscle growth",
-        "Stay hydrated with 2-3 liters of water daily",
-        "Focus on whole foods rather than processed options",
-        "Eat small, frequent meals throughout the day",
-        "Plan and prep meals in advance"
+        "Stay hydrated by drinking at least 8 glasses of water daily",
+        "Focus on whole foods rather than processed items",
+        "Balance macronutrients (protein, carbs, fats) in each meal",
+        "Consider portion sizes to align with your goals"
       ],
-      restrictions: []
+      restrictions: dietaryRestrictions ? [dietaryRestrictions] : []
     },
     workouts: [
       {
-        name: "Upper Body Focus",
-        description: "Strengthening chest, back, shoulders, and arms",
+        name: isLowImpact ? "Low-Impact Full Body Workout" : "Full Body Strength Training",
+        description: `A balanced workout targeting all major muscle groups with ${workoutIntensity.toLowerCase()} intensity`,
         duration: "45 minutes",
         exercises: [
           {
-            name: preferredActivities?.includes("push") ? "Push-ups" : "Dumbbell Chest Press",
+            name: isLowImpact ? "Wall Push-Ups" : "Push-Ups",
             sets: "3",
-            reps: "10-12",
-            notes: "Focus on proper form"
+            reps: fitnessLevel.toLowerCase() === 'beginner' ? "8" : "12",
+            notes: "Focus on proper form rather than quantity"
           },
           {
-            name: "Dumbbell Rows",
-            sets: "3",
-            reps: "12",
-            notes: "Squeeze shoulder blades together"
-          },
-          {
-            name: "Shoulder Press",
-            sets: "3",
-            reps: "10",
-            notes: "Use appropriate weight"
-          },
-          {
-            name: "Bicep Curls",
-            sets: "3",
-            reps: "12",
-            notes: "Control the movement"
-          }
-        ]
-      },
-      {
-        name: "Lower Body Strength",
-        description: "Building strength in legs and core",
-        duration: "45 minutes",
-        exercises: [
-          {
-            name: "Bodyweight Squats",
+            name: isLowImpact ? "Chair Squats" : "Bodyweight Squats",
             sets: "3",
             reps: "15",
-            notes: "Keep knees aligned with toes"
-          },
-          {
-            name: "Lunges",
-            sets: "3",
-            reps: "10 each leg",
-            notes: "Step forward, keeping torso upright"
-          },
-          {
-            name: "Glute Bridges",
-            sets: "3",
-            reps: "15",
-            notes: "Squeeze glutes at the top"
+            notes: "Keep your knees aligned with your toes"
           },
           {
             name: "Plank",
             sets: "3",
-            reps: "30-60 seconds",
-            notes: "Keep body in straight line"
+            reps: "30 seconds",
+            notes: "Maintain a straight line from head to heels"
           }
         ]
       },
       {
-        name: preferredActivities?.includes("swim") ? "Swimming Session" : "Cardio Circuit",
-        description: "Improving cardiovascular fitness",
+        name: "Cardiovascular Training",
+        description: isLowImpact ? "Low-impact cardio to improve heart health" : "Cardio session to improve endurance and burn calories",
         duration: "30 minutes",
-        exercises: preferredActivities?.includes("swim") ? [
+        exercises: [
           {
-            name: "Freestyle Swimming",
-            sets: "4",
-            reps: "5 minutes",
-            notes: "Focus on breathing pattern"
-          },
-          {
-            name: "Backstroke",
-            sets: "2",
-            reps: "3 minutes",
-            notes: "Recovery pace"
-          },
-          {
-            name: "Sprint Intervals",
-            sets: "4",
-            reps: "1 minute fast, 1 minute slow",
-            notes: "Push hard during sprints"
-          }
-        ] : [
-          {
-            name: "Jumping Jacks",
-            sets: "3",
-            reps: "30 seconds",
-            notes: "Full range of motion"
-          },
-          {
-            name: "High Knees",
-            sets: "3",
-            reps: "30 seconds",
-            notes: "Maintain good posture"
-          },
-          {
-            name: "Mountain Climbers",
-            sets: "3",
-            reps: "30 seconds",
-            notes: "Keep core engaged"
-          },
-          {
-            name: "Burpees",
-            sets: "3",
-            reps: "10",
-            notes: "Modify if needed for fitness level"
+            name: isLowImpact ? "Walking" : "Jogging",
+            sets: "1",
+            reps: "30 minutes",
+            notes: "Maintain a consistent pace that challenges you"
           }
         ]
       }
     ],
     goals: {
       short_term: [
-        "Complete all workouts for 2 weeks consistently",
-        "Master proper form for all exercises",
-        "Establish regular meal timing",
-        "Track workouts and nutrition daily"
+        "Establish a consistent workout routine",
+        "Improve energy levels through better nutrition",
+        "Develop proper exercise form"
       ],
       long_term: [
-        fitnessGoals?.includes("muscle") ? "Increase lean muscle mass" : (fitnessGoals?.includes("weight") ? "Achieve healthy weight loss" : "Improve overall fitness level"),
-        "Improve strength by 20% within 3 months",
-        "Build sustainable exercise habits",
-        "Increase energy levels throughout the day"
+        fitnessGoals || "Improve overall fitness and health",
+        "Build sustainable healthy habits",
+        "Increase strength and endurance"
       ],
       metrics: {
-        "Weight": "Weekly measurements",
-        "Body measurements": "Monthly tracking",
-        "Strength progress": "Track weights/reps each workout",
-        "Energy levels": "Daily rating (1-10 scale)",
-        "Workout consistency": "% of planned workouts completed"
+        consistency: "3-4 workouts per week",
+        energy: "Improved daily energy levels",
+        strength: "Gradual increase in exercise capacity"
       }
     },
     weekly_routine: {
       monday: {
-        workouts: ["Upper Body Focus"],
-        nutrition: "Higher carbs to fuel workout",
-        recovery: "Light stretching"
+        workouts: ["Full Body Strength Training"],
+        nutrition: "Focus on protein intake for muscle recovery",
+        recovery: "Light stretching in the evening"
       },
       tuesday: {
-        workouts: [preferredActivities?.includes("swim") ? "Swimming Session" : "Cardio Circuit"],
-        nutrition: "Balanced macros",
-        recovery: "10 minutes foam rolling"
+        workouts: ["Cardiovascular Training"],
+        nutrition: "Balanced macronutrients",
+        recovery: "Adequate hydration"
       },
       wednesday: {
-        workouts: ["Lower Body Strength"],
-        nutrition: "Higher protein for recovery",
-        recovery: "Extra focus on leg stretches"
+        workouts: ["Rest Day"],
+        nutrition: "Balanced diet, focus on vegetables",
+        recovery: "Light walking and stretching"
       },
       thursday: {
-        workouts: ["Rest Day"],
-        nutrition: "Normal balanced meals",
-        recovery: "Light walking and full-body stretching"
+        workouts: ["Full Body Strength Training"],
+        nutrition: "Focus on protein intake for muscle recovery",
+        recovery: "Light stretching in the evening"
       },
       friday: {
-        workouts: ["Upper Body Focus"],
-        nutrition: "Higher carbs to fuel workout",
-        recovery: "Light stretching"
+        workouts: ["Cardiovascular Training"],
+        nutrition: "Balanced macronutrients",
+        recovery: "Adequate hydration"
       },
       saturday: {
-        workouts: [preferredActivities?.includes("swim") ? "Swimming Session" : "Cardio Circuit"],
-        nutrition: "Balanced macros",
-        recovery: "10 minutes foam rolling"
+        workouts: ["Active Recovery (light walking or yoga)"],
+        nutrition: "Balanced diet",
+        recovery: "Extra stretching or foam rolling"
       },
       sunday: {
         workouts: ["Rest Day"],
-        nutrition: "Normal balanced meals",
-        recovery: "Light walking and full-body stretching"
+        nutrition: "Balanced diet",
+        recovery: "Complete rest, focus on quality sleep"
       }
     },
-    notes: ["This is a customized plan generated based on your profile information. Adjust as needed based on your progress."]
+    recommendations: [
+      "Listen to your body and adjust intensity as needed",
+      "Consistency is more important than perfection",
+      "Get 7-9 hours of quality sleep each night",
+      "Consider tracking your progress to stay motivated"
+    ],
+    notes: healthConditions ? 
+      ["This is a generic plan. Please consult with a healthcare professional before starting, given your health conditions."] : 
+      ["This plan can be adjusted as you progress and your fitness level improves."]
   };
 }
 

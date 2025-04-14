@@ -1,34 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateLLMResponse } from './service';
+import { generateFitnessPlan } from './service';
 
 export async function POST(request: NextRequest) {
   try {
     // Parse the request body
-    const body = await request.json();
+    const formData = await request.json();
     
-    console.log('LLM API Request:', JSON.stringify(body, null, 2));
+    console.log('Fitness Plan API Request:', JSON.stringify(formData, null, 2));
     
-    // Validate the request
-    if (!body.messages) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Missing required field: messages' }), 
-        { status: 400 }
-      );
-    }
-    
-    // Generate response from LLM
-    const responseText = await generateLLMResponse({
-      messages: body.messages,
-      profile: body.profile || null,
-      mode: body.mode || null
-    });
+    // Generate fitness plan
+    const fitnessPlan = await generateFitnessPlan(formData);
     
     // Return the response
-    return NextResponse.json({ response: responseText });
+    return NextResponse.json({ plan: fitnessPlan });
   } catch (error) {
-    console.error('Error in LLM API route:', error);
+    console.error('Error in fitness plan API route:', error);
     return new NextResponse(
-      JSON.stringify({ error: 'An error occurred while processing your request' }), 
+      JSON.stringify({ error: 'An error occurred while generating your fitness plan' }), 
       { status: 500 }
     );
   }
