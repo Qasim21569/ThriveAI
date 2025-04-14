@@ -1,73 +1,87 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import ClientLayout from './client-layout';
 import { SafeComponent } from '@/components/ui/safe-component';
 
-// Dynamically import components with SSR disabled to avoid hydration issues
+// Simple loading component
+const LoadingFallback = () => (
+  <div className="p-4 text-center text-white/50">
+    Loading...
+  </div>
+);
+
+// Always use reducedIntensity for background animations to improve performance
 const BackgroundAnimation = dynamic(
-  () => import('@/components/landing/background-animation').then(mod => mod.BackgroundAnimation),
-  { ssr: false }
+  () => import('@/components/landing/background-animation').then(mod => ({
+    default: (props) => <mod.BackgroundAnimation {...props} reducedIntensity={true} />
+  })),
+  { ssr: false, loading: () => <div className="fixed inset-0 bg-[#0A0A1F]"></div> }
 );
 
 const StarsBackground = dynamic(
   () => import('@/components/landing/stars-background').then(mod => ({ default: mod.StarsBackground })),
-  { ssr: false }
+  { ssr: false, loading: () => null }
 );
 
 const Navbar = dynamic(
   () => import('@/components/landing/navbar').then(mod => mod.Navbar),
-  { ssr: false }
+  { ssr: false, loading: () => <div className="h-16 w-full"></div> }
 );
 
 const HeroSection = dynamic(
   () => import('@/components/landing/hero-section').then(mod => mod.HeroSection),
-  { ssr: false }
+  { ssr: false, loading: () => <LoadingFallback /> }
 );
 
 const ModeCards = dynamic(
   () => import('@/components/landing/mode-cards').then(mod => mod.ModeCards),
-  { ssr: false }
+  { ssr: false, loading: () => <LoadingFallback /> }
 );
 
 const FeaturesSection = dynamic(
   () => import('@/components/landing/features-section').then(mod => mod.FeaturesSection),
-  { ssr: false }
+  { ssr: false, loading: () => <LoadingFallback /> }
 );
 
 const TestimonialsSection = dynamic(
   () => import('@/components/landing/testimonials-section').then(mod => mod.TestimonialsSection),
-  { ssr: false }
+  { ssr: false, loading: () => <LoadingFallback /> }
 );
 
 const Footer = dynamic(
   () => import('@/components/landing/footer').then(mod => mod.Footer),
-  { ssr: false }
+  { ssr: false, loading: () => <LoadingFallback /> }
 );
 
 export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showFullBackground, setShowFullBackground] = useState(false);
   
   useEffect(() => {
-    // Delay background animations for smoother loading
-    const timer = setTimeout(() => {
+    // Staged loading approach for better performance
+    const initialTimer = setTimeout(() => {
       setIsLoaded(true);
-    }, 500); // Increased delay for safer loading
+    }, 300); 
     
-    return () => clearTimeout(timer);
+    // Delay full background effects even more
+    const backgroundTimer = setTimeout(() => {
+      setShowFullBackground(true);
+    }, 1500);
+    
+    return () => {
+      clearTimeout(initialTimer);
+      clearTimeout(backgroundTimer);
+    };
   }, []);
 
   // Create error-safe loading for component sections
-  const renderComponent = (Component: React.ComponentType<any>, fallback: React.ReactNode = null) => {
-    if (!isLoaded) return fallback;
+  const renderComponent = (Component: React.ComponentType<any>, priority = false) => {
+    if (!isLoaded && !priority) return <LoadingFallback />;
     
     return (
-      <SafeComponent fallback={
-        <div className="p-4 text-center text-white/50">
-          Loading component...
-        </div>
-      }>
+      <SafeComponent fallback={<LoadingFallback />}>
         <Component />
       </SafeComponent>
     );
@@ -79,30 +93,28 @@ export default function HomePage() {
         {/* Static background */}
         <div className="fixed inset-0 bg-[#0A0A1F] z-[-2]"></div>
         
-        {/* Three.js Stars Background */}
-        {isLoaded && (
+        {/* Only show 3D stars when fully loaded */}
+        {showFullBackground && (
           <SafeComponent>
             <StarsBackground />
           </SafeComponent>
         )}
         
-        {/* Animated background waves */}
+        {/* Always show background animations but with reduced intensity */}
         {isLoaded && (
           <SafeComponent>
             <BackgroundAnimation />
           </SafeComponent>
         )}
         
-        {/* Navbar */}
-        <SafeComponent>
-          <Navbar />
-        </SafeComponent>
+        {/* Navbar - prioritized loading */}
+        {renderComponent(Navbar, true)}
 
-        <main>
-          {/* Hero Section */}
-          {renderComponent(HeroSection)}
+        <main className="flex-1">
+          {/* Hero Section - prioritized */}
+          {renderComponent(HeroSection, true)}
           
-          {/* Mode Cards - Main coaching options */}
+          {/* Mode Cards - main coaching options */}
           {renderComponent(ModeCards)}
           
           {/* Features Section */}

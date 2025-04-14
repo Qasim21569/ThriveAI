@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -14,8 +14,18 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import dynamic from 'next/dynamic';
+
+// Load heavy libraries dynamically
+const jsPDF = dynamic(() => import('jspdf').then(mod => mod.default), {
+  ssr: false,
+  loading: () => null,
+});
+
+const html2canvas = dynamic(() => import('html2canvas').then(mod => mod.default), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface Exercise {
   name: string;
@@ -70,6 +80,7 @@ export default function FitnessPlanPage() {
   const [activeWorkout, setActiveWorkout] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Load plan from localStorage on component mount
   useEffect(() => {
@@ -101,28 +112,37 @@ export default function FitnessPlanPage() {
     if (!contentRef.current) return;
     
     try {
-      // Set loading state if needed
+      setIsGeneratingPDF(true);
       const element = contentRef.current;
       
       // Scroll to top to ensure everything is visible
       window.scrollTo(0, 0);
       
+      // Dynamically load required libraries only when needed
+      const Html2Canvas = await import('html2canvas').then(mod => mod.default);
+      const JsPDF = await import('jspdf').then(mod => mod.default);
+      
       // Create a new jsPDF instance
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new JsPDF('p', 'mm', 'a4');
       
-      // Alert the user
-      alert('Generating PDF. This may take a moment...');
-      
-      // Convert HTML to canvas
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher scale for better quality
+      // Convert HTML to canvas with optimized settings
+      const canvas = await Html2Canvas(element, {
+        scale: 1.5, // Reduced scale for better performance
         useCORS: true,
         logging: false,
-        windowWidth: 1200, // Fixed width
+        windowWidth: 1200,
+        onclone: (clonedDoc) => {
+          // Simplify cloned document to improve rendering performance
+          const animations = clonedDoc.querySelectorAll('.animate-pulse, .animate-spin');
+          animations.forEach(el => {
+            el.classList.remove('animate-pulse', 'animate-spin');
+          });
+          return clonedDoc;
+        }
       });
       
       // Get canvas dimensions
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG with high quality
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 295; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -131,14 +151,14 @@ export default function FitnessPlanPage() {
       let position = 0;
       
       // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
       
       // Add additional pages if needed
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
       
@@ -147,8 +167,65 @@ export default function FitnessPlanPage() {
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
+
+  // Add this function to the component
+  // This optimizes the rendering of workout lists
+  const renderWorkoutsList = useCallback(() => {
+    if (!plan?.workouts) return null;
+    
+    return plan.workouts.map((workout, index) => (
+      <div 
+        key={`workout-${index}`} 
+        className="border border-violet-500/30 rounded-lg p-4 mb-4 bg-violet-950/20"
+      >
+        <div 
+          className="flex justify-between items-center cursor-pointer" 
+          onClick={() => toggleWorkout(index)}
+        >
+          <div>
+            <h3 className="text-lg font-semibold text-violet-300">{workout.name}</h3>
+            <p className="text-sm text-violet-300/70">{workout.description}</p>
+            <div className="text-xs text-violet-400/60 mt-1">Duration: {workout.duration}</div>
+          </div>
+          <div className="text-violet-400">
+            {activeWorkout === index ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </div>
+        </div>
+        
+        {activeWorkout === index && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-4 border-t border-violet-500/20 pt-4"
+          >
+            <h4 className="text-sm font-medium text-violet-200 mb-2">Exercises:</h4>
+            <div className="space-y-3">
+              {workout.exercises.map((exercise, exIndex) => (
+                <div key={`ex-${index}-${exIndex}`} className="bg-violet-900/20 p-3 rounded-md">
+                  <h5 className="font-medium text-violet-100">{exercise.name}</h5>
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-violet-300/80">Sets: {exercise.sets}</div>
+                    <div className="text-violet-300/80">Reps: {exercise.reps}</div>
+                  </div>
+                  {exercise.notes && (
+                    <div className="mt-2 text-sm text-violet-300/70">
+                      <span className="font-medium">Notes:</span> {exercise.notes}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    ));
+  }, [plan?.workouts, activeWorkout, toggleWorkout]);
 
   // When there's an error or loading
   if (error) {
@@ -309,45 +386,7 @@ export default function FitnessPlanPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {plan.workouts.map((workout, workoutIndex) => (
-                    <div key={workoutIndex} className="border border-violet-800/30 rounded-lg overflow-hidden">
-                      <div 
-                        className="p-4 bg-violet-900/20 flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleWorkout(workoutIndex)}
-                      >
-                        <div>
-                          <h3 className="font-medium text-violet-300">{workout.name}</h3>
-                          <p className="text-xs text-violet-400">{workout.duration}</p>
-                        </div>
-                        {activeWorkout === workoutIndex ? (
-                          <ExpandLessIcon className="text-violet-400" />
-                        ) : (
-                          <ExpandMoreIcon className="text-violet-400" />
-                        )}
-                      </div>
-                      
-                      {activeWorkout === workoutIndex && (
-                        <div className="p-4 bg-violet-950/30">
-                          <p className="text-sm text-slate-300 mb-4">{workout.description}</p>
-                          
-                          <div className="space-y-4">
-                            {workout.exercises.map((exercise, exIndex) => (
-                              <div key={exIndex} className="bg-violet-900/10 p-3 rounded border border-violet-800/20">
-                                <h4 className="font-medium text-violet-300 mb-1">{exercise.name}</h4>
-                                <div className="flex gap-4 text-xs text-violet-400">
-                                  <span>{exercise.sets} sets</span>
-                                  <span>{exercise.reps} reps</span>
-                                </div>
-                                {exercise.notes && (
-                                  <p className="text-xs text-slate-400 mt-2">{exercise.notes}</p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {renderWorkoutsList()}
                 </div>
               </CardContent>
             </Card>

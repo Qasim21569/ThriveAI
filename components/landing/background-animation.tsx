@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 interface BackgroundAnimationProps {
@@ -9,10 +9,10 @@ interface BackgroundAnimationProps {
 
 export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnimationProps) => {
   const [mounted, setMounted] = useState(false);
-
-  // Enhanced stars/particles with different sizes and animations
-  const starsRef = useRef(
-    Array.from({ length: 50 }, (_, i) => ({
+  
+  // Use useMemo to compute particles only once
+  const stars = useMemo(() => 
+    Array.from({ length: reducedIntensity ? 25 : 40 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -28,12 +28,11 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
         : Math.random() > 0.5 
           ? 'rgba(100, 60, 255, 0.8)' 
           : 'rgba(220, 190, 255, 0.8)',
-    }))
-  );
+    })), [reducedIntensity]);
 
   // Special accent stars (brighter and more prominent)
-  const accentStarsRef = useRef(
-    Array.from({ length: 10 }, (_, i) => ({
+  const accentStars = useMemo(() => 
+    Array.from({ length: reducedIntensity ? 5 : 8 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -42,12 +41,11 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
       glow: Math.random() * 12 + 8,
       duration: Math.random() * 3 + 2,
       delay: Math.random() * 2,
-    }))
-  );
+    })), [reducedIntensity]);
 
-  // Galaxy clusters (larger blurred elements)
-  const galaxiesRef = useRef(
-    Array.from({ length: 4 }, (_, i) => ({
+  // Galaxy clusters (larger blurred elements) - reduced amount
+  const galaxies = useMemo(() => 
+    Array.from({ length: reducedIntensity ? 2 : 3 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -59,12 +57,11 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
       type: Math.random() > 0.5 ? 'spiral' : 'elliptical',
       color1: Math.random() > 0.5 ? 'rgba(180, 100, 255, 0.3)' : 'rgba(120, 80, 220, 0.3)',
       color2: Math.random() > 0.5 ? 'rgba(60, 20, 140, 0.2)' : 'rgba(100, 60, 170, 0.2)',
-    }))
-  );
+    })), [reducedIntensity]);
 
-  // Nebulae (colorful cosmic clouds)
-  const nebulaeRef = useRef(
-    Array.from({ length: 3 }, (_, i) => ({
+  // Nebulae (colorful cosmic clouds) - reduced to 2 maximum
+  const nebulae = useMemo(() => 
+    Array.from({ length: reducedIntensity ? 1 : 2 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -76,15 +73,12 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
       delay: Math.random() * 5,
       color: i === 0 
         ? 'radial-gradient(ellipse, rgba(255, 100, 200, 0.3), rgba(100, 50, 180, 0.2), transparent 70%)' 
-        : i === 1 
-          ? 'radial-gradient(ellipse, rgba(100, 200, 255, 0.3), rgba(80, 70, 200, 0.2), transparent 70%)' 
-          : 'radial-gradient(ellipse, rgba(150, 255, 200, 0.3), rgba(80, 120, 200, 0.2), transparent 70%)',
-    }))
-  );
+        : 'radial-gradient(ellipse, rgba(100, 200, 255, 0.3), rgba(80, 70, 200, 0.2), transparent 70%)',
+    })), [reducedIntensity]);
 
-  // Shooting stars
-  const shootingStarsRef = useRef(
-    Array.from({ length: 5 }, (_, i) => ({
+  // Shooting stars - significantly reduced
+  const shootingStars = useMemo(() => 
+    Array.from({ length: reducedIntensity ? 0 : 3 }, (_, i) => ({
       id: i,
       startX: Math.random() * 100,
       startY: Math.random() * 100,
@@ -94,8 +88,7 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
       duration: Math.random() * 3 + 2,
       delay: Math.random() * 10 + i * 8,
       width: Math.random() * 2 + 1,
-    }))
-  );
+    })), [reducedIntensity]);
 
   useEffect(() => {
     // Delay mounting to avoid initial animation jank
@@ -111,18 +104,11 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
     return null;
   }
 
-  // Safely access animated elements
-  const stars = starsRef.current || [];
-  const accentStars = accentStarsRef.current || [];
-  const galaxies = galaxiesRef.current || [];
-  const nebulae = nebulaeRef.current || [];
-  const shootingStars = shootingStarsRef.current || [];
-
   // Adjust opacity based on whether we want reduced intensity
-  const mainOpacity = reducedIntensity ? 0.35 : 0.5;
-  const dustOpacity = reducedIntensity ? 0.25 : 0.4;
-  const waveOpacity = reducedIntensity ? 0.15 : 0.25;
-  const galaxyOpacity = reducedIntensity ? 0.2 : 0.3;
+  const mainOpacity = reducedIntensity ? 0.2 : 0.4;
+  const dustOpacity = reducedIntensity ? 0.15 : 0.3;
+  const waveOpacity = reducedIntensity ? 0.1 : 0.2;
+  const galaxyOpacity = reducedIntensity ? 0.15 : 0.25;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-[1]">
@@ -132,6 +118,7 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
         style={{
           opacity: mainOpacity,
           background: 'linear-gradient(135deg, rgba(15, 0, 40, 0.7) 0%, rgba(40, 10, 90, 0.5) 50%, rgba(60, 25, 140, 0.3) 100%)',
+          willChange: 'transform',
         }}
       />
 
@@ -141,10 +128,11 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
         style={{
           background: 'radial-gradient(circle at center, transparent 40%, rgba(10, 0, 30, 0.4) 100%)',
           opacity: 0.7,
+          willChange: 'transform',
         }}
       />
 
-      {/* Galaxies */}
+      {/* Galaxies - reduced rendering */}
       {galaxies.map((galaxy) => (
         <motion.div
           key={`galaxy-${galaxy.id}`}
@@ -154,12 +142,13 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
             top: `${galaxy.top}%`,
             width: `${galaxy.size}px`,
             height: `${galaxy.size}px`,
-            opacity: galaxy.opacity * (reducedIntensity ? 0.7 : 1),
+            opacity: galaxy.opacity * (reducedIntensity ? 0.6 : 0.9),
             background: galaxy.type === 'spiral'
               ? `conic-gradient(from ${galaxy.rotation}deg, ${galaxy.color1}, ${galaxy.color2}, transparent 70%)`
               : `radial-gradient(ellipse, ${galaxy.color1}, ${galaxy.color2}, transparent 70%)`,
             filter: 'blur(40px)',
             transform: `rotate(${galaxy.rotation}deg)`,
+            willChange: 'transform, opacity',
           }}
           animate={{
             scale: [1, 1.05, 1],
@@ -175,9 +164,9 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
             },
             opacity: {
               duration: galaxy.duration * 0.3,
-            repeat: Infinity,
+              repeat: Infinity,
               repeatType: "reverse",
-            ease: "easeInOut"
+              ease: "easeInOut"
             },
             rotate: {
               duration: galaxy.duration,
