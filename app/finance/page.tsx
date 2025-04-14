@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ChatLayout from '../../components/ChatLayout';
+import ChatLayout from '../components/ChatLayout';
 
 const FinancePage = () => {
   const financeData = {
