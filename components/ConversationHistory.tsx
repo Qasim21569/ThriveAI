@@ -45,6 +45,13 @@ type Conversation = {
   updatedAt: any;
 };
 
+// Type for the result from Firebase functions
+interface FirebaseResult {
+  success: boolean;
+  conversations?: Conversation[];
+  error?: string;
+}
+
 type ConversationHistoryProps = {
   userId: string;
   onSelectConversation: (conversation: Conversation) => void;
@@ -91,10 +98,10 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   const fetchConversations = async () => {
     setLoading(true);
     try {
-      const result = await getUserConversations(userId, filterMode);
+      const result = await getUserConversations(userId, filterMode as string | undefined) as FirebaseResult;
       if (result.success) {
-        setConversations(result.conversations);
-        setFilteredConversations(result.conversations);
+        setConversations(result.conversations || []);
+        setFilteredConversations(result.conversations || []);
       } else {
         console.error('Failed to fetch conversations:', result.error);
       }
@@ -117,7 +124,7 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   const handleSaveTitle = async () => {
     if (editingConversation && newTitle.trim()) {
       try {
-        const result = await updateConversationTitle(editingConversation.id, newTitle.trim());
+        const result = await updateConversationTitle(editingConversation.id, newTitle.trim()) as FirebaseResult;
         if (result.success) {
           // Update the conversation in the local state
           setConversations(prevConversations => 
@@ -143,7 +150,7 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   const handleConfirmDelete = async () => {
     if (conversationToDelete) {
       try {
-        const result = await deleteConversation(conversationToDelete);
+        const result = await deleteConversation(conversationToDelete) as FirebaseResult;
         if (result.success) {
           // Remove the conversation from the local state
           setConversations(prevConversations => 

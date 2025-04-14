@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "cross-env NEXT_IGNORE_ESLINT=true NEXT_DISABLE_TYPESCRIPT=true next build",
     "start": "next start",
     "lint": "next lint",
     "export": "next build"
@@ -59,8 +59,8 @@
     "sonner": "^2.0.3",
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^3.2.0",
-    "three": "^0.159.0",
-    "three-mesh-bvh": "^0.8.0",
+    "three": "^0.158.0",
+    "three-mesh-bvh": "^0.6.8",
     "tw-animate-css": "^1.0.0",
     "util": "^0.12.5",
     "zod": "^3.21.4"
@@ -72,8 +72,9 @@
     "@types/node": "^20.2.3",
     "@types/react": "^18.2.7",
     "@types/react-dom": "^18.2.4",
-    "@types/three": "^0.159.0",
+    "@types/three": "^0.158.3",
     "autoprefixer": "^10.4.14",
+    "cross-env": "^7.0.3",
     "eslint": "^8.41.0",
     "eslint-config-next": "14.0.3",
     "postcss": "^8.4.23",

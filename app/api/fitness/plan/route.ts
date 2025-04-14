@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateFitnessPlan } from '../../llm/service';
+import { generateFitnessPlan } from '@/app/api/llm/service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,16 +18,20 @@ export async function POST(request: NextRequest) {
     
     try {
       // Generate fitness plan from LLM
+      console.log('Calling generateFitnessPlan...');
       const fitnessPlan = await generateFitnessPlan(formData);
+      console.log('Generated plan:', JSON.stringify(fitnessPlan, null, 2));
       
       // Return the structured fitness plan
       return NextResponse.json({ plan: fitnessPlan });
     } catch (error) {
       console.error('Error generating fitness plan:', error);
       
-      // Try again with the fallback function directly
+      // Try again with the fallback plan directly
+      console.log('Using fallback plan...');
+      const fallbackPlan = await generateFitnessPlan(formData);
       return NextResponse.json({ 
-        plan: generateFitnessPlan(formData),
+        plan: fallbackPlan,
         warning: 'Used fallback plan due to API error'
       });
     }

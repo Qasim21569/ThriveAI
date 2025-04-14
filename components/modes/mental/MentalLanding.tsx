@@ -11,10 +11,19 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// Define a type for star objects
+interface Star {
+  key: number;
+  top: string;
+  left: string;
+  opacity: number;
+  animation: string;
+}
+
 const MentalLanding = () => {
   const sectionRef = useRef(null);
   const categoriesRef = useRef(null);
-  const [stars, setStars] = useState([]);
+  const [stars, setStars] = useState<Star[]>([]);
 
   useEffect(() => {
     // Generate stars on client-side only to avoid hydration errors
@@ -32,7 +41,7 @@ const MentalLanding = () => {
       
       categoryItems.forEach((item, index) => {
         gsap.fromTo(
-          item,
+          item as HTMLElement,
           {
             opacity: 0,
             y: 30,
@@ -43,7 +52,7 @@ const MentalLanding = () => {
             duration: 0.8,
             ease: 'power2.out',
             scrollTrigger: {
-              trigger: item,
+              trigger: item as HTMLElement,
               start: 'top 80%',
               toggleActions: 'play none none reverse',
             },

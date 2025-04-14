@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, CircularProgress, Tabs, Tab, Paper, Divider } from '@mui/material';
 import { useAuth } from '@/lib/firebase/authContext';
@@ -42,8 +40,12 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ onClose, selectedMode = 'gene
     
     try {
       setLoading(true);
+      // Since we've validated the user with isValidUser, we can safely use user.uid
+      const userId = (user as User).uid;
+      if (!userId) return;
+      
       const response = await fetch(
-        `/api/goals?userId=${user.uid}&mode=${currentMode}&status=${activeTab}`
+        `/api/goals?userId=${userId}&mode=${currentMode}&status=${activeTab}`
       );
       
       if (!response.ok) {
@@ -59,19 +61,21 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ onClose, selectedMode = 'gene
     }
   };
 
-
-
   const handleCreateGoal = async (goalData: any) => {
     if (!isValidUser(user)) return;
     
     try {
+      // Since we've validated the user with isValidUser, we can safely use user.uid
+      const userId = (user as User).uid;
+      if (!userId) return;
+      
       const response = await fetch('/api/goals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.uid,
+          userId,
           ...goalData,
           mode: currentMode,
         }),

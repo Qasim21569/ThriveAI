@@ -256,3 +256,4 @@ export const generateChartPDF = async (
     return false;
   }
 }; 
+ 

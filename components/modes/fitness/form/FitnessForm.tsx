@@ -647,4 +647,4 @@ export function FitnessForm() {
       </Card>
     </motion.div>
   );
-} 
+}

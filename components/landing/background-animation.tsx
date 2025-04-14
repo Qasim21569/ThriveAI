@@ -12,7 +12,7 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
 
   // Enhanced stars/particles with different sizes and animations
   const starsRef = useRef(
-    Array.from({ length: 20 }, (_, i) => ({
+    Array.from({ length: 50 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -23,13 +23,17 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
       yOffset: Math.random() * 40 - 20,
       duration: Math.random() * 20 + 30,
       delay: Math.random() * 5,
-      color: Math.random() > 0.6 ? 'rgba(180, 70, 255, 0.8)' : 'rgba(100, 60, 255, 0.8)',
+      color: Math.random() > 0.6 
+        ? 'rgba(180, 70, 255, 0.8)' 
+        : Math.random() > 0.5 
+          ? 'rgba(100, 60, 255, 0.8)' 
+          : 'rgba(220, 190, 255, 0.8)',
     }))
   );
 
   // Special accent stars (brighter and more prominent)
   const accentStarsRef = useRef(
-    Array.from({ length: 5 }, (_, i) => ({
+    Array.from({ length: 10 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -38,6 +42,58 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
       glow: Math.random() * 12 + 8,
       duration: Math.random() * 3 + 2,
       delay: Math.random() * 2,
+    }))
+  );
+
+  // Galaxy clusters (larger blurred elements)
+  const galaxiesRef = useRef(
+    Array.from({ length: 4 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: Math.random() * 200 + 150,
+      rotation: Math.random() * 360,
+      opacity: Math.random() * 0.3 + 0.1,
+      duration: Math.random() * 100 + 80,
+      delay: Math.random() * 10,
+      type: Math.random() > 0.5 ? 'spiral' : 'elliptical',
+      color1: Math.random() > 0.5 ? 'rgba(180, 100, 255, 0.3)' : 'rgba(120, 80, 220, 0.3)',
+      color2: Math.random() > 0.5 ? 'rgba(60, 20, 140, 0.2)' : 'rgba(100, 60, 170, 0.2)',
+    }))
+  );
+
+  // Nebulae (colorful cosmic clouds)
+  const nebulaeRef = useRef(
+    Array.from({ length: 3 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      width: Math.random() * 30 + 20,
+      height: Math.random() * 30 + 20,
+      opacity: Math.random() * 0.3 + 0.1,
+      blur: Math.random() * 80 + 40,
+      duration: Math.random() * 80 + 60,
+      delay: Math.random() * 5,
+      color: i === 0 
+        ? 'radial-gradient(ellipse, rgba(255, 100, 200, 0.3), rgba(100, 50, 180, 0.2), transparent 70%)' 
+        : i === 1 
+          ? 'radial-gradient(ellipse, rgba(100, 200, 255, 0.3), rgba(80, 70, 200, 0.2), transparent 70%)' 
+          : 'radial-gradient(ellipse, rgba(150, 255, 200, 0.3), rgba(80, 120, 200, 0.2), transparent 70%)',
+    }))
+  );
+
+  // Shooting stars
+  const shootingStarsRef = useRef(
+    Array.from({ length: 5 }, (_, i) => ({
+      id: i,
+      startX: Math.random() * 100,
+      startY: Math.random() * 100,
+      length: Math.random() * 150 + 50,
+      angle: Math.random() * 60 - 30,
+      opacity: Math.random() * 0.7 + 0.3,
+      duration: Math.random() * 3 + 2,
+      delay: Math.random() * 10 + i * 8,
+      width: Math.random() * 2 + 1,
     }))
   );
 
@@ -55,14 +111,18 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
     return null;
   }
 
-  // Safely access stars
+  // Safely access animated elements
   const stars = starsRef.current || [];
   const accentStars = accentStarsRef.current || [];
+  const galaxies = galaxiesRef.current || [];
+  const nebulae = nebulaeRef.current || [];
+  const shootingStars = shootingStarsRef.current || [];
 
   // Adjust opacity based on whether we want reduced intensity
-  const mainOpacity = reducedIntensity ? 0.4 : 0.5;
-  const dustOpacity = reducedIntensity ? 0.3 : 0.4;
-  const waveOpacity = reducedIntensity ? 0.2 : 0.3;
+  const mainOpacity = reducedIntensity ? 0.35 : 0.5;
+  const dustOpacity = reducedIntensity ? 0.25 : 0.4;
+  const waveOpacity = reducedIntensity ? 0.15 : 0.25;
+  const galaxyOpacity = reducedIntensity ? 0.2 : 0.3;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-[1]">
@@ -71,9 +131,90 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
         className="absolute inset-0"
         style={{
           opacity: mainOpacity,
-          background: 'linear-gradient(135deg, rgba(20, 0, 50, 0.7) 0%, rgba(45, 10, 100, 0.5) 50%, rgba(65, 30, 150, 0.3) 100%)',
+          background: 'linear-gradient(135deg, rgba(15, 0, 40, 0.7) 0%, rgba(40, 10, 90, 0.5) 50%, rgba(60, 25, 140, 0.3) 100%)',
         }}
       />
+
+      {/* Cosmic vignette effect */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(circle at center, transparent 40%, rgba(10, 0, 30, 0.4) 100%)',
+          opacity: 0.7,
+        }}
+      />
+
+      {/* Galaxies */}
+      {galaxies.map((galaxy) => (
+        <motion.div
+          key={`galaxy-${galaxy.id}`}
+          className="absolute rounded-full"
+          style={{
+            left: `${galaxy.left}%`,
+            top: `${galaxy.top}%`,
+            width: `${galaxy.size}px`,
+            height: `${galaxy.size}px`,
+            opacity: galaxy.opacity * (reducedIntensity ? 0.7 : 1),
+            background: galaxy.type === 'spiral'
+              ? `conic-gradient(from ${galaxy.rotation}deg, ${galaxy.color1}, ${galaxy.color2}, transparent 70%)`
+              : `radial-gradient(ellipse, ${galaxy.color1}, ${galaxy.color2}, transparent 70%)`,
+            filter: 'blur(40px)',
+            transform: `rotate(${galaxy.rotation}deg)`,
+          }}
+          animate={{
+            scale: [1, 1.05, 1],
+            opacity: [galaxy.opacity * 0.7, galaxy.opacity, galaxy.opacity * 0.7],
+            rotate: galaxy.rotation + 10,
+          }}
+          transition={{
+            scale: {
+              duration: galaxy.duration * 0.5,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut"
+            },
+            opacity: {
+              duration: galaxy.duration * 0.3,
+            repeat: Infinity,
+              repeatType: "reverse",
+            ease: "easeInOut"
+            },
+            rotate: {
+              duration: galaxy.duration,
+              repeat: Infinity,
+              ease: "linear"
+            }
+          }}
+        />
+      ))}
+
+      {/* Nebulae (colorful cosmic clouds) */}
+      {nebulae.map((nebula) => (
+        <motion.div
+          key={`nebula-${nebula.id}`}
+          className="absolute"
+          style={{
+            left: `${nebula.left}%`,
+            top: `${nebula.top}%`,
+            width: `${nebula.width}%`,
+            height: `${nebula.height}%`,
+            background: nebula.color,
+            filter: `blur(${nebula.blur}px)`,
+            opacity: nebula.opacity * (reducedIntensity ? 0.7 : 1),
+          }}
+          animate={{
+            opacity: [nebula.opacity * 0.6, nebula.opacity, nebula.opacity * 0.6],
+            scale: [0.9, 1.1, 0.9],
+          }}
+          transition={{
+            duration: nebula.duration,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut",
+            delay: nebula.delay
+          }}
+        />
+      ))}
 
       {/* Cosmic dust clouds - larger, softer blurs */}
       <div
@@ -235,6 +376,37 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
             repeatType: "reverse",
             ease: "easeInOut",
             delay: star.delay
+          }}
+        />
+      ))}
+
+      {/* Shooting stars */}
+      {shootingStars.map((star) => (
+        <motion.div
+          key={`shooting-star-${star.id}`}
+          className="absolute"
+          style={{
+            left: `${star.startX}%`,
+            top: `${star.startY}%`,
+            width: `${star.length}px`,
+            height: `${star.width}px`,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            boxShadow: `0 0 10px 2px rgba(180, 150, 255, 0.8), 0 0 20px 5px rgba(160, 100, 255, 0.4)`,
+            opacity: 0,
+            transformOrigin: 'left center',
+            transform: `rotate(${star.angle}deg)`,
+            borderRadius: '0 50% 50% 0',
+          }}
+          animate={{
+            opacity: [0, star.opacity, 0],
+            scaleX: [0.1, 1, 0.1],
+            x: [0, star.length * 1.5, star.length * 3],
+          }}
+          transition={{
+            duration: star.duration,
+            repeat: Infinity,
+            repeatDelay: star.delay,
+            ease: [0.2, 0.65, 0.9, 0.95],
           }}
         />
       ))}

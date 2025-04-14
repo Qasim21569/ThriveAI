@@ -1,21 +1,20 @@
 "use client";
 
-import { Box, Button, Typography, Container, IconButton, Drawer, List, ListItem, Fade, Grid } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { AppBar, Box, Button, Container, Drawer, Grid, IconButton, List, ListItem, Toolbar, Typography, Fade } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '@/lib/firebase/authContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebaseConfig';
+import { User } from 'firebase/auth';
 
 const menuItems = [
   { name: 'Home', path: '/' },
-  { name: 'Coaching', path: '#' },
-  { name: 'Goals', path: '/goals' },
-  { name: 'Resources', path: '#' },
-  { name: 'Community', path: '#' }
+  { name: 'Features', path: '/#features' },
+  { name: 'About', path: '/about' },
 ];
 
 const Navbar = () => {
@@ -56,9 +55,10 @@ const Navbar = () => {
 
   // Helper function to get user's display name or email
   const getUserDisplayName = () => {
-    if (user) {
-      if (user.displayName) return user.displayName;
-      if (user.email) return user.email.split('@')[0]; // Use part before @ in email
+    const firebaseUser = user as User | null;
+    if (firebaseUser) {
+      if (firebaseUser.displayName) return firebaseUser.displayName;
+      if (firebaseUser.email) return firebaseUser.email.split('@')[0]; // Use part before @ in email
       return 'User';
     }
     return '';

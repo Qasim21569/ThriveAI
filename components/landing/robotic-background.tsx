@@ -2,14 +2,66 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 
+// Define types for our elements
+interface Dot {
+  id: number;
+  left: number;
+  top: number;
+  delay: number;
+  duration: number;
+  width: number;
+  height: number;
+  opacity: number;
+  color: string;
+}
+
+interface Line {
+  id: number;
+  left: number;
+  top: number;
+  width: number;
+  rotate: number;
+  delay: number;
+  duration: number;
+  opacity: number;
+}
+
+interface Node {
+  id: number;
+  left: number;
+  top: number;
+  size: number;
+  delay: number;
+  duration: number;
+}
+
+interface Orb {
+  id: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  delay: number;
+  duration: number;
+  opacity: number;
+}
+
+interface DigitalLine {
+  id: number;
+  top: number;
+  delay: number;
+  height: number;
+  opacity: number;
+}
+
 export default function RoboticBackground() {
   const [isMounted, setIsMounted] = useState(false);
   // Use refs to store generated elements for stability
-  const dotsRef = useRef([]);
-  const linesRef = useRef([]);
-  const nodesRef = useRef([]);
-  const orbsRef = useRef([]);
-  const digitalLinesRef = useRef([]);
+  const dotsRef = useRef<Dot[]>([]);
+  const linesRef = useRef<Line[]>([]);
+  const nodesRef = useRef<Node[]>([]);
+  const orbsRef = useRef<Orb[]>([]);
+  const digitalLinesRef = useRef<DigitalLine[]>([]);
   
   useEffect(() => {
     // Generate static elements once to prevent regeneration on re-renders
