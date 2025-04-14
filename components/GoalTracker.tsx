@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, CircularProgress, Tabs, Tab, Paper, Divider } from '@mui/material';
 import { useAuth } from '@/lib/firebase/authContext';

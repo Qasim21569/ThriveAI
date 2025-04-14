@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import GoalTracker from '@/components/GoalTracker';
 import { Box, Container, Typography, Paper } from '@mui/material';
