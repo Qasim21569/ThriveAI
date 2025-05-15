@@ -159,6 +159,23 @@ const Navbar = () => {
                       <Typography variant="body1" sx={{ color: 'white' }}>
                         Welcome, <span style={{ color: '#facc15', fontWeight: 'bold' }}>{getUserDisplayName()}</span>
                       </Typography>
+                      <Link href="/profile" style={{ textDecoration: 'none' }}>
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            color: 'white',
+                            borderColor: 'rgba(255,255,255,0.3)',
+                            borderRadius: '50px',
+                            px: 3,
+                            '&:hover': {
+                              borderColor: '#facc15',
+                              backgroundColor: 'rgba(250, 204, 21, 0.1)'
+                            }
+                          }}
+                        >
+                          Profile
+                        </Button>
+                      </Link>
                       <Button
                         variant="outlined"
                         onClick={handleSignOut}
@@ -320,6 +337,23 @@ const Navbar = () => {
               <Typography variant="body1" color="white" sx={{ textAlign: 'center', mb: 1 }}>
                 Welcome, <span style={{ color: '#facc15', fontWeight: 'bold' }}>{getUserDisplayName()}</span>
               </Typography>
+              <Link href="/profile" style={{ textDecoration: 'none', width: '100%' }}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  sx={{
+                    color: 'white',
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    '&:hover': {
+                      borderColor: '#facc15',
+                      backgroundColor: 'rgba(250, 204, 21, 0.1)'
+                    },
+                    mb: 2
+                  }}
+                >
+                  Profile
+                </Button>
+              </Link>
               <Button
                 variant="outlined"
                 fullWidth

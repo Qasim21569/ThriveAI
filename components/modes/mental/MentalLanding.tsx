@@ -248,23 +248,29 @@ const MentalLanding = () => {
             </div>
             <h3 className="text-2xl font-bold mb-3 text-violet-300">Important Note</h3>
             <p className="text-lg text-[#e5e5ff] opacity-90">
-              This tool is designed for self-awareness and guidance, not for clinical diagnosis. If you're experiencing severe distress, please seek help from a qualified mental health professional.
+              This mental wellbeing assessment is not a diagnostic tool and does not replace professional medical advice.
+              If you're experiencing severe mental health symptoms, please seek help from a qualified healthcare provider.
             </p>
           </div>
         </motion.div>
 
-        {/* CTA Button */}
+        {/* Call to Action Button */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
-          className="mt-20 text-center"
+          transition={{ duration: 0.8, delay: 1.0 }}
+          className="text-center mb-20"
         >
-          <Link href="#" className="inline-block">
-            <button className="relative overflow-hidden group px-10 py-5 rounded-full text-white font-bold text-xl transition-all duration-300 bg-gradient-to-r from-[#4726d9] to-[#b446ff] shadow-[0_0_25px_rgba(180,70,255,0.5)] hover:shadow-[0_0_35px_rgba(180,70,255,0.8)]">
-              <span className="relative z-10">Coming Soon</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-[#643cff] to-[#b446ff] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+          <Link href="/mental/form" className="inline-block">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#643cff] to-[#b446ff] rounded-lg blur-xl opacity-70 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse animation-delay-2000"></div>
+              <button className="relative px-8 py-4 bg-black rounded-lg text-xl font-bold text-white leading-tight overflow-hidden">
+                Take the Mental Wellbeing Assessment
+                <div className="absolute inset-0 rounded-lg overflow-hidden">
+                  <span className="absolute inset-0 bg-gradient-to-r from-[#643cff] to-[#b446ff] opacity-0 group-hover:opacity-20 transition duration-300"></span>
+                </div>
             </button>
+            </div>
           </Link>
         </motion.div>
       </div>

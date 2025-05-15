@@ -133,7 +133,7 @@ export default function HomePage() {
               </ContentChunk>
             </>
           )}
-        </main>
+    </main>
       </div>
     </ClientLayout>
   );

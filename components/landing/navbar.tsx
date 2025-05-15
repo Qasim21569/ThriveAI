@@ -129,6 +129,12 @@ export const Navbar = () => {
                     {userName}
                   </motion.span>
                 </div>
+                <Link 
+                  href="/profile"
+                  className="px-4 py-2 text-white border border-indigo-500/30 rounded-lg text-sm font-medium hover:bg-indigo-500/10 transition-colors"
+                >
+                  Profile
+                </Link>
                 <button 
                   onClick={handleSignOut}
                   className="px-4 py-2 text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg text-sm font-medium hover:from-indigo-700 hover:to-purple-700 transition-colors"
@@ -232,14 +238,20 @@ export const Navbar = () => {
               </Link>
               
               {isLoggedIn ? (
-                <div className="pt-2 border-t border-indigo-500/10 flex justify-between items-center">
+                <div className="pt-2 border-t border-indigo-500/10 flex flex-col space-y-2">
                   <div className="text-indigo-100">Welcome, <span className="font-bold text-indigo-400">{userName}</span></div>
+                  <Link 
+                    href="/profile"
+                    className="w-full px-4 py-2 text-center text-white border border-indigo-500/30 rounded-lg text-sm font-medium hover:bg-indigo-500/10 transition-colors"
+                  >
+                    Profile
+                  </Link>
                   <button 
                     onClick={() => {
                       handleSignOut();
                       setShowMobileMenu(false);
                     }}
-                    className="px-4 py-2 text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg text-sm font-medium"
+                    className="w-full px-4 py-2 text-center text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg text-sm font-medium"
                   >
                     Sign Out
                   </button>

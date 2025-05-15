@@ -6,7 +6,7 @@ export type CoachingMode = 'career' | 'fitness' | 'finance' | 'mental' | 'genera
 // Initialize OpenRouter client settings
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'mistralai/mistral-7b-instruct:free';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1:free';
 
 // Define FitnessFormData type
 interface FitnessFormData {
@@ -20,14 +20,19 @@ interface FitnessFormData {
   dietaryRestrictions?: string;
   availableEquipment?: string;
   timeCommitment?: string;
-  preferredActivities?: string;
-  dislikedActivities?: string;
+  preferredExercises?: string;
+  dislikedExercises?: string;
   injuries?: string;
   additionalInfo?: string;
 }
 
 // Define FitnessPlan type
 interface FitnessPlan {
+  health_summary?: {
+    overview: string;
+    recommendations: string[];
+    cautions: string[];
+  };
   diet: {
     meals: Array<{
       name: string;
@@ -62,6 +67,7 @@ interface FitnessPlan {
     saturday: { workouts: string[]; nutrition: string; recovery?: string };
     sunday: { workouts: string[]; nutrition: string; recovery?: string };
   };
+  recommendations?: string[];
 }
 
 /**
@@ -78,7 +84,7 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
     const apiToken = process.env.OPENROUTER_API_KEY?.trim();
     console.log("API Token available:", !!apiToken);
     console.log("API Token first 10 chars:", apiToken?.substring(0, 10));
-    const model = process.env.OPENROUTER_MODEL?.trim() || 'mistralai/mistral-7b-instruct:free';
+    const model = process.env.OPENROUTER_MODEL?.trim() || 'deepseek/deepseek-r1:free';
     console.log("Using model:", model);
 
     // Verify we're in a valid environment
@@ -111,13 +117,17 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
-          model: model,
+          model: 'deepseek/deepseek-r1:free',
           messages: [
             { role: 'user', content: prompt }
           ],
-          max_tokens: 1200,
-          temperature: 0.7,
-          route: "fallback" // Add a fallback route option
+          max_tokens: 4000,
+          temperature: 0.3,
+          route: "fallback",
+          data_privacy: {
+            prompt_training: true,
+            prompt_public: true
+          }
         })
       });
 
@@ -212,8 +222,8 @@ function createFitnessPlanPrompt(formData: FitnessFormData): string {
     dietaryRestrictions,
     availableEquipment,
     timeCommitment,
-    preferredActivities,
-    dislikedActivities,
+    preferredExercises,
+    dislikedExercises,
     injuries,
     additionalInfo
   } = formData;
@@ -221,70 +231,74 @@ function createFitnessPlanPrompt(formData: FitnessFormData): string {
   // Generate a random seed to ensure unique results
   const seed = Math.floor(Math.random() * 10000);
 
-  return `Create a compact personalized fitness plan as a valid JSON object for a person with the following details:
+  return `Create a detailed personalized fitness plan as JSON for:
  
 Age: ${age || "Not specified"}
 Gender: ${gender || "Not specified"}
 Height: ${height || "Not specified"}
 Weight: ${weight || "Not specified"}
 Fitness Level: ${fitnessLevel || "Beginner"}
-Fitness Goals: ${Array.isArray(fitnessGoals) ? fitnessGoals.join(', ') : fitnessGoals || "General fitness improvement"}
+Goals: ${Array.isArray(fitnessGoals) ? fitnessGoals.join(', ') : fitnessGoals || "General fitness improvement"}
 Health Conditions: ${healthConditions || "None"}
 Dietary Restrictions: ${dietaryRestrictions || "None"}
 Available Equipment: ${availableEquipment || "Basic home equipment"}
 Time Commitment: ${timeCommitment || "3-4 hours per week"}
-Preferred Activities: ${preferredActivities || "Various exercises"}
-Disliked Activities: ${dislikedActivities || "None specified"}
+Preferred Activities: ${preferredExercises || "Various exercises"}
+Disliked Activities: ${dislikedExercises || "None specified"}
 Injuries: ${injuries || "None"}
 Additional Info: ${additionalInfo || "None provided"}
  
-The fitness plan should include:
-1. Diet with meals and recommendations (be concise but useful)
-2. Three workout routines with exercises, sets, and reps
-3. Weekly routine with ALL 7 DAYS of the week (brief for each day)
-4. Goals and metrics
+Include: 
+1) Personalized health summary and recommendations
+2) Diet with meals and nutritional guidelines 
+3) Three workout routines with detailed exercises
+4) Weekly routine (all 7 days)
+5) Goals and progress metrics
  
 IMPORTANT:
-- Be creative and generate a unique plan (seed #${seed})
-- Keep the response VERY COMPACT to fit in token limits
-- MUST include all 7 days of the week in the weekly_routine (monday through sunday)
-- Using numerical values for sets and reps is fine
-- Lists should be brief but descriptive
-- All properties must have string values, including numbers (example: "sets": "3" not "sets": 3)
+- Create a unique plan (seed #${seed})
+- KEEP VERY COMPACT to prevent truncation
+- All weekly_routine days MUST have string[] workouts arrays
+- Keep all property values as strings
+- Be specific with exercise details considering injuries
  
-Provide ONLY a properly formatted JSON object matching this structure:
- 
+JSON structure:
 {
+  "health_summary": {
+    "overview": "",
+    "recommendations": [""],
+    "cautions": [""]
+  },
   "diet": {
     "meals": [
-      {"name": "string", "description": "string", "time": "string"}
+      {"name": "", "description": "", "time": ""}
     ],
-    "recommendations": ["string", "string"],
-    "restrictions": ["string"]
+    "recommendations": [""],
+    "restrictions": [""]
   },
   "workouts": [
     {
-      "name": "string",
-      "description": "string",
-      "duration": "string",
+      "name": "",
+      "description": "",
+      "duration": "",
       "exercises": [
-        {"name": "string", "sets": "string", "reps": "string", "notes": "string"}
+        {"name": "", "sets": "", "reps": "", "notes": ""}
       ]
     }
   ],
   "goals": {
-    "short_term": ["string"],
-    "long_term": ["string"],
+    "short_term": [""],
+    "long_term": [""],
     "metrics": {"key": "value"}
   },
   "weekly_routine": {
-    "monday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"},
-    "tuesday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"},
-    "wednesday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"},
-    "thursday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"},
-    "friday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"},
-    "saturday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"},
-    "sunday": {"workouts": ["string"], "nutrition": "string", "recovery": "string"}
+    "monday": {"workouts": [""], "nutrition": "", "recovery": ""},
+    "tuesday": {"workouts": [""], "nutrition": "", "recovery": ""},
+    "wednesday": {"workouts": [""], "nutrition": "", "recovery": ""},
+    "thursday": {"workouts": [""], "nutrition": "", "recovery": ""},
+    "friday": {"workouts": [""], "nutrition": "", "recovery": ""},
+    "saturday": {"workouts": [""], "nutrition": "", "recovery": ""},
+    "sunday": {"workouts": [""], "nutrition": "", "recovery": ""}
   }
 }`;
 }
@@ -381,7 +395,7 @@ function ensureCompleteFitnessPlan(plan: any): FitnessPlan {
  * Generate a fallback fitness plan
  */
 function generateFallbackPlan(formData: FitnessFormData): FitnessPlan {
-  const { fitnessLevel, fitnessGoals, healthConditions, preferredActivities } = formData;
+  const { fitnessLevel, fitnessGoals, healthConditions, preferredExercises } = formData;
   
   console.log("Generating fallback fitness plan");
   
@@ -389,6 +403,18 @@ function generateFallbackPlan(formData: FitnessFormData): FitnessPlan {
   const planVariation = Math.floor(Math.random() * 3) + 1;
   
   return {
+    health_summary: {
+      overview: `Based on your profile details, this fitness plan is designed to improve your overall fitness while considering your specific needs and conditions${healthConditions ? ` including ${healthConditions}` : ''}.`,
+      recommendations: [
+        "Monitor your exertion levels during workouts",
+        "Stay well hydrated throughout the day",
+        "Track your progress weekly and adjust as needed"
+      ],
+      cautions: [
+        "Stop any exercise that causes pain",
+        "Consult with a healthcare provider before starting this program"
+      ]
+    },
     diet: {
       meals: [
         {

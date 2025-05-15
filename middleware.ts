@@ -23,10 +23,13 @@ export function middleware(request: NextRequest) {
     }
   }
   
+  // For profile page, we'll let client-side authentication handle redirection
+  // This removes the server-side redirect that was causing issues
+  
   return NextResponse.next();
 }
 
 // See: https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
 export const config = {
-  matcher: '/api/chat',
+  matcher: ['/api/chat'],
 }; 

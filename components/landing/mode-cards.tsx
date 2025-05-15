@@ -145,7 +145,8 @@ export const ModeCards = () => {
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+        {/* Only showing the two functional cards with centered layout */}
+        <div className="flex flex-col md:flex-row gap-8 lg:gap-12 justify-center max-w-4xl mx-auto">
           {/* Fitness Card - Enhanced */}
           <motion.div
             initial="hidden"
@@ -153,6 +154,7 @@ export const ModeCards = () => {
             variants={fadeUpVariants}
             custom={1}
             whileHover={{ y: -8, transition: { duration: 0.3 } }}
+            className="w-full md:w-1/2 max-w-md"
           >
             <div 
               onClick={() => handleModeSelect('fitness')} 
@@ -206,6 +208,7 @@ export const ModeCards = () => {
             variants={fadeUpVariants}
             custom={2}
             whileHover={{ y: -8, transition: { duration: 0.3 } }}
+            className="w-full md:w-1/2 max-w-md"
           >
             <div 
               onClick={() => handleModeSelect('mental')} 
@@ -247,112 +250,6 @@ export const ModeCards = () => {
                     <span className="w-10 h-10 bg-gradient-to-br from-[#1b1b4c] to-[#19124a] rounded-full flex items-center justify-center text-indigo-400 group-hover:bg-violet-700/50 group-hover:text-violet-200 transition-all">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          
-          {/* Career Card - Disabled */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeUpVariants}
-            custom={3}
-          >
-            <div className="block">
-              <div className="relative h-full rounded-xl bg-gradient-to-br from-[#14143a]/70 to-[#1c1056]/70 border border-indigo-900/20 shadow-xl shadow-indigo-900/10 overflow-hidden group filter grayscale">
-                {/* Coming Soon Banner */}
-                <div className="absolute top-6 right-6 z-10">
-                  <div className="bg-indigo-600/80 text-white py-1 px-3 rounded-full text-sm font-semibold shadow-md">
-                    Coming Soon
-                  </div>
-                </div>
-                
-                {/* Overlay to dim the card */}
-                <div className="absolute inset-0 bg-black/40"></div>
-                
-                {/* Corner accents */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-indigo-500/20 rounded-tl-lg"></div>
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-purple-500/20 rounded-br-lg"></div>
-                
-                <div className="p-8 md:p-10">
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#1b1b4c]/70 to-[#19124a]/70 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-indigo-300/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-white/70">Career Coaching</h3>
-                      <div className="h-1 w-12 mt-2 rounded-full bg-gradient-to-r from-indigo-500/40 to-violet-500/40"></div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-lg text-gray-400 mb-8">
-                    Navigate your career path with personalized advice on job hunting, skill development, and workplace success.
-                  </p>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-indigo-400/60 font-semibold text-lg">Coming Soon</span>
-                    <span className="w-10 h-10 bg-gradient-to-br from-[#1b1b4c]/50 to-[#19124a]/50 rounded-full flex items-center justify-center text-indigo-400/50">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          
-          {/* Financial Wellbeing Card - Disabled */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeUpVariants}
-            custom={4}
-          >
-            <div className="block">
-              <div className="relative h-full rounded-xl bg-gradient-to-br from-[#14143a]/70 to-[#1c1056]/70 border border-indigo-900/20 shadow-xl shadow-indigo-900/10 overflow-hidden group filter grayscale">
-                {/* Coming Soon Banner */}
-                <div className="absolute top-6 right-6 z-10">
-                  <div className="bg-indigo-600/80 text-white py-1 px-3 rounded-full text-sm font-semibold shadow-md">
-                    Coming Soon
-                  </div>
-                </div>
-                
-                {/* Overlay to dim the card */}
-                <div className="absolute inset-0 bg-black/40"></div>
-                
-                {/* Corner accents */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-indigo-500/20 rounded-tl-lg"></div>
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-purple-500/20 rounded-br-lg"></div>
-                
-                <div className="p-8 md:p-10">
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#1b1b4c]/70 to-[#19124a]/70 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-indigo-300/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-white/70">Financial Wellbeing</h3>
-                      <div className="h-1 w-12 mt-2 rounded-full bg-gradient-to-r from-indigo-500/40 to-violet-500/40"></div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-lg text-gray-400 mb-8">
-                    Take control of your finances with personalized budgeting, saving strategies, and long-term financial planning.
-                  </p>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-indigo-400/60 font-semibold text-lg">Coming Soon</span>
-                    <span className="w-10 h-10 bg-gradient-to-br from-[#1b1b4c]/50 to-[#19124a]/50 rounded-full flex items-center justify-center text-indigo-400/50">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </span>
                   </div>

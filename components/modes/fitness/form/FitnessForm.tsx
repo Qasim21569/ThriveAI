@@ -24,6 +24,8 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { FormProgress } from './FormProgress';
+import { auth } from '@/lib/firebase/firebaseConfig';
+import { savePlanToUserProfile } from '@/lib/firebase/userService';
 
 // Form validation schema with more specific validations
 const formSchema = z.object({
@@ -52,6 +54,7 @@ const formSchema = z.object({
   workoutDuration: z.string().min(1, 'Workout duration is required'),
   preferredExercises: z.string().min(1, 'Preferred exercises are required'),
   dislikedExercises: z.string().min(1, 'Disliked exercises are required'),
+  dietPreference: z.string().min(1, 'Diet preference is required'),
   
   // Health Considerations
   injuries: z.string().min(1, 'Injuries or limitations are required'),
@@ -71,6 +74,7 @@ export function FitnessForm() {
   const [validStages, setValidStages] = useState<FormStage[]>(['basic']);
   const [formProgress, setFormProgress] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [generationStep, setGenerationStep] = useState<string>('');
 
   // Form init with react-hook-form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -88,6 +92,7 @@ export function FitnessForm() {
       workoutDuration: '',
       preferredExercises: '',
       dislikedExercises: '',
+      dietPreference: 'general',
       injuries: '',
       healthConditions: '',
       additionalInfo: '',
@@ -162,61 +167,110 @@ export function FitnessForm() {
   ]);
 
   // Form submission handler
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (formData) => {
     setIsSubmitting(true);
+    setGenerationStep('initializing');
+    const user = auth.currentUser;
     
     try {
-      // Show confetti effect
-      setShowConfetti(true);
+      // Convert fitnessGoals array to string if it exists
+      if (formData.fitnessGoals && Array.isArray(formData.fitnessGoals)) {
+        formData.fitnessGoals = formData.fitnessGoals.join(', ');
+      }
       
-      // Save form data to local storage
-      localStorage.setItem('fitnessFormData', JSON.stringify(values));
-
-      // Send data to fitness plan API
-      const response = await fetch('/api/fitness/plan', {
+      // First, let's get the fitness assessment
+      setGenerationStep('assessment');
+      const assessmentResponse = await fetch('/api/fitness/assessment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          age: values.age,
-          gender: values.gender,
-          height: values.height,
-          weight: values.weight,
-          fitnessLevel: values.experienceLevel,
-          fitnessGoals: values.primaryGoal,
-          healthConditions: values.healthConditions,
-          dietaryRestrictions: values.additionalInfo.includes('diet') ? values.additionalInfo : 'None specified',
-          availableEquipment: 'Basic home equipment', // Default value
-          timeCommitment: values.workoutDaysPerWeek + ' days per week, ' + values.workoutDuration + ' minutes per session',
-          preferredActivities: values.preferredExercises,
-          dislikedActivities: values.dislikedExercises,
-          injuries: values.injuries,
-          additionalInfo: values.additionalInfo
-        }),
+        body: JSON.stringify(formData),
       });
-
-      if (!response.ok) {
+      
+      if (!assessmentResponse.ok) {
+        console.error("Assessment response error:", assessmentResponse.status, assessmentResponse.statusText);
+        const errorData = await assessmentResponse.text();
+        console.error("Error details:", errorData);
+        throw new Error('Failed to generate fitness assessment');
+      }
+      
+      const assessmentData = await assessmentResponse.json();
+      
+      // Save assessment to local storage
+      localStorage.setItem('fitnessAssessment', JSON.stringify(assessmentData.assessment));
+      
+      // Then, get the fitness plan
+      setGenerationStep('plan');
+      const planResponse = await fetch('/api/llm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!planResponse.ok) {
+        console.error("Plan response error:", planResponse.status, planResponse.statusText);
+        const errorData = await planResponse.text();
+        console.error("Error details:", errorData);
         throw new Error('Failed to generate fitness plan');
       }
-
-      const data = await response.json();
+      
+      const planData = await planResponse.json();
       
       // Save the fitness plan to local storage
-      localStorage.setItem('fitnessPlan', JSON.stringify(data.plan));
+      localStorage.setItem('fitnessPlan', JSON.stringify(planData.plan));
+      
+      // If user is logged in, save to Firebase
+      setGenerationStep('saving');
+      if (user) {
+        try {
+          // Save assessment
+          const assessmentSaveResult = await savePlanToUserProfile(user.uid, {
+            id: `fitness-assessment-${Date.now()}`,
+            type: 'fitness-assessment',
+            path: '/fitness/assessment',
+            title: 'Fitness Assessment',
+            assessment: assessmentData.assessment,
+            createdAt: new Date().toISOString()
+          });
+          
+          // Save plan
+          const planSaveResult = await savePlanToUserProfile(user.uid, {
+            id: `fitness-plan-${Date.now()}`,
+            type: 'fitness-plan',
+            path: '/fitness/plan',
+            title: 'Fitness Plan',
+            plan: planData.plan,
+            createdAt: new Date().toISOString()
+          });
+          
+          if (assessmentSaveResult && planSaveResult) {
+            toast.success('Your fitness assessment and plan have been saved to your profile!');
+          } else {
+            toast.error('There was an issue saving to your profile. Your plan is still available locally.');
+          }
+        } catch (firebaseError) {
+          console.error("Firebase save error:", firebaseError);
+          toast.error('Could not save to your profile. Check your internet connection.');
+        }
+      }
       
       // Show success message
-      toast.success('Your fitness plan is ready!');
+      setGenerationStep('complete');
+      toast.success('Your fitness assessment and plan are ready!');
       
-      // Redirect to the plan view page
+      // Redirect directly to the plan page with reduced delay for a faster experience
       setTimeout(() => {
         router.push('/fitness/plan');
-      }, 1500);
+      }, 800);
       
     } catch (error) {
       console.error("Error in form submission:", error);
-      toast.error('There was an error generating your fitness plan. Please try again.');
+      toast.error('There was an error generating your fitness assessment. Please try again.');
       setIsSubmitting(false);
+      setGenerationStep('');
     }
   }
   
@@ -243,6 +297,24 @@ export function FitnessForm() {
     health: "Any health considerations we should know about?"
   };
 
+  // Add helper to get loading message based on generation step
+  const getLoadingMessage = () => {
+    switch (generationStep) {
+      case 'initializing':
+        return 'Initializing your fitness profile...';
+      case 'assessment':
+        return 'Creating your personalized fitness assessment...';
+      case 'plan':
+        return 'Designing your custom fitness plan...';
+      case 'saving':
+        return 'Saving your fitness program...';
+      case 'complete':
+        return 'Complete! Redirecting you to your plan...';
+      default:
+        return 'Processing your fitness information...';
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -250,6 +322,97 @@ export function FitnessForm() {
       transition={{ duration: 0.5 }}
       className="w-full max-w-4xl mx-auto"
     >
+      {/* Show enhanced loading overlay when submitting */}
+      {isSubmitting && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
+        >
+          <div className="bg-background/60 p-8 rounded-xl border border-violet-500/30 shadow-xl max-w-md w-full">
+            <div className="flex flex-col items-center justify-center space-y-6">
+              <div className="relative">
+                <div className="w-20 h-20 border-4 border-violet-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-20 h-20 border-4 border-t-violet-600 border-r-violet-600 rounded-full animate-spin"></div>
+              </div>
+              
+              <h3 className="text-xl font-medium text-violet-200 text-center">
+                {getLoadingMessage()}
+              </h3>
+              
+              <div className="w-full space-y-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-violet-300">Creating Assessment</span>
+                    <span className="text-violet-300">
+                      {generationStep === 'initializing' ? '0%' : 
+                       generationStep === 'assessment' ? '25%' : '100%'}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-violet-950/50 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: '0%' }}
+                      animate={{ 
+                        width: generationStep === 'initializing' ? '5%' : 
+                               generationStep === 'assessment' ? '30%' : '100%' 
+                      }}
+                      transition={{ duration: 0.5 }}
+                      className="h-full bg-violet-600 rounded-full"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-violet-300">Generating Plan</span>
+                    <span className="text-violet-300">
+                      {generationStep === 'initializing' || generationStep === 'assessment' ? '0%' : 
+                       generationStep === 'plan' ? '50%' : '100%'}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-violet-950/50 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: '0%' }}
+                      animate={{ 
+                        width: generationStep === 'initializing' || generationStep === 'assessment' ? '0%' : 
+                               generationStep === 'plan' ? '60%' : '100%' 
+                      }}
+                      transition={{ duration: 0.5 }}
+                      className="h-full bg-violet-600 rounded-full"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-violet-300">Finalizing</span>
+                    <span className="text-violet-300">
+                      {generationStep === 'initializing' || generationStep === 'assessment' || generationStep === 'plan' ? '0%' : 
+                       generationStep === 'saving' ? '75%' : '100%'}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-violet-950/50 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: '0%' }}
+                      animate={{ 
+                        width: generationStep === 'initializing' || generationStep === 'assessment' || generationStep === 'plan' ? '0%' : 
+                               generationStep === 'saving' ? '80%' : '100%' 
+                      }}
+                      transition={{ duration: 0.5 }}
+                      className="h-full bg-violet-600 rounded-full"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-sm text-violet-300/80 text-center max-w-xs">
+                We're crafting your personalized fitness program based on your unique profile. This may take a minute.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+      
       {/* Progress Indicator */}
       <FormProgress 
         currentStage={activeTab} 
@@ -500,6 +663,30 @@ export function FitnessForm() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="dietPreference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-violet-200">Diet Preference</FormLabel>
+                        <select 
+                          className="bg-background/40 border-violet-800/50 focus:border-violet-500 w-full h-9 rounded-md border px-3 py-2 text-sm"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        >
+                          <option value="general">General (No specific preference)</option>
+                          <option value="vegetarian">Vegetarian</option>
+                          <option value="vegan">Vegan</option>
+                          <option value="non-vegetarian">Non-vegetarian</option>
+                        </select>
+                        <FormDescription className="text-blue-300/70 text-xs mt-1">
+                          This helps us tailor your nutrition recommendations.
+                        </FormDescription>
+                        <FormMessage className="text-pink-400" />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={form.control}

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateFitnessPlan } from '@/app/api/llm/service';
 
-// Skip OpenRouter and just return a high-quality predetermined plan
-// that's still personalized to the user's input
+// Generate a fitness plan without any external API calls
 function generateLocalPlan(formData: any) {
   console.log("Generating local plan without API...");
   
@@ -236,7 +234,7 @@ export async function POST(request: NextRequest) {
     // Parse the request body containing the form data
     const formData = await request.json();
     
-    console.log('Fitness Plan API Request:', JSON.stringify(formData, null, 2));
+    console.log('Local Fitness Plan API Request:', JSON.stringify(formData, null, 2));
     
     // Validate the request
     if (!formData) {
@@ -246,8 +244,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Skip API calls and use local generation
-    console.log('Generating local fitness plan instead of API call...');
+    // Generate a local plan without API calls
+    console.log('Generating local fitness plan...');
     const localPlan = generateLocalPlan(formData);
     
     return NextResponse.json({ 
@@ -256,7 +254,7 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Error in fitness plan API route:', error);
+    console.error('Error in local fitness plan API route:', error);
     return new NextResponse(
       JSON.stringify({ 
         error: 'An error occurred while generating your fitness plan',

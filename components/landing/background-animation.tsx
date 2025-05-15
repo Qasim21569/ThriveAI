@@ -164,9 +164,9 @@ export const BackgroundAnimation = ({ reducedIntensity = false }: BackgroundAnim
             },
             opacity: {
               duration: galaxy.duration * 0.3,
-              repeat: Infinity,
+            repeat: Infinity,
               repeatType: "reverse",
-              ease: "easeInOut"
+            ease: "easeInOut"
             },
             rotate: {
               duration: galaxy.duration,

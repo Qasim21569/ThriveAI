@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateFitnessPlan } from './service';
+import { generateMentalAssessment } from './service';
 
 export async function POST(request: NextRequest) {
   try {
     // Parse the request body
     const formData = await request.json();
     
-    console.log('OpenRouter Fitness Plan API Request:', JSON.stringify(formData, null, 2));
+    console.log('Mental Wellbeing Assessment API Request:', JSON.stringify(formData, null, 2));
     console.log('OPENROUTER_API_KEY available:', !!process.env.OPENROUTER_API_KEY);
     console.log('OPENROUTER_MODEL:', process.env.OPENROUTER_MODEL || 'default not set');
     
-    // Generate fitness plan
-    const fitnessPlan = await generateFitnessPlan(formData);
+    // Generate mental assessment
+    const assessment = await generateMentalAssessment(formData);
     
     // Return the response
-    return NextResponse.json({ plan: fitnessPlan });
+    return NextResponse.json({ assessment });
   } catch (error) {
-    console.error('Error in fitness plan API route:', error);
+    console.error('Error in mental assessment API route:', error);
     return new NextResponse(
       JSON.stringify({ 
-        error: 'An error occurred while generating your fitness plan',
+        error: 'An error occurred while generating your mental wellbeing assessment',
         details: error instanceof Error ? error.message : 'Unknown error'
       }), 
       { status: 500 }

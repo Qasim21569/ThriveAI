@@ -22,8 +22,9 @@ const BackgroundAnimation = dynamic(
   { ssr: false }
 );
 
-const FitnessForm = dynamic(
-  () => import('@/components/modes/fitness/form/FitnessForm').then(mod => mod.FitnessForm),
+// Create a wrapper component that imports FitnessForm
+const DynamicFitnessForm = dynamic(
+  () => import('@/components/modes/fitness/form/FitnessFormWrapper'),
   { ssr: false }
 );
 
@@ -99,7 +100,7 @@ export default function FitnessFormPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <FitnessForm />
+            <DynamicFitnessForm />
           </motion.div>
         </SafeComponent>
       </main>

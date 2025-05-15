@@ -25,7 +25,7 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; titl
       
       <div className="text-indigo-400 mb-6">
         <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-indigo-900/70 to-indigo-700/40 flex items-center justify-center shadow-lg">
-          {icon}
+        {icon}
         </div>
       </div>
       <h3 className="text-xl font-semibold mb-3 text-white">{title}</h3>
