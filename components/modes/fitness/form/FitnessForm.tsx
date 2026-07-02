@@ -349,6 +349,39 @@ export function FitnessForm() {
 
       <Card>
         <CardHeader>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-2 flex justify-center">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  form.reset({
+                    age: '28',
+                    height: '175',
+                    weight: '72',
+                    gender: 'male',
+                    primaryGoal: 'muscle-gain',
+                    timeframe: '3-months',
+                    activityLevel: 'moderately-active',
+                    experienceLevel: 'intermediate',
+                    workoutDaysPerWeek: '4',
+                    workoutDuration: '45-60',
+                    preferredExercises: 'Weightlifting, swimming',
+                    dislikedExercises: 'Running',
+                    dietPreference: 'non-vegetarian',
+                    injuries: 'None',
+                    healthConditions: 'None',
+                    additionalInfo: 'Testing the app — sample data.',
+                  });
+                  setActiveTab('health');
+                }}
+                className="text-xs text-text-muted"
+              >
+                🧪 Fill sample data (dev only)
+              </Button>
+            </div>
+          )}
           <CardTitle className="text-center text-2xl md:text-[1.75rem]">
             Your fitness profile
           </CardTitle>
