@@ -4,7 +4,7 @@
 export type CoachingMode = 'career' | 'fitness' | 'finance' | 'mental' | 'general';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 // Field names must match exactly what FitnessForm.tsx sends
 interface FitnessFormData {

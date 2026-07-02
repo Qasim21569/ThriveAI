@@ -93,7 +93,7 @@ export async function generateMentalAssessment(formData: MentalFormData): Promis
     const prompt = createMentalAssessmentPrompt(formData);
 
     const apiToken = process.env.GROQ_API_KEY?.trim();
-    const model = process.env.GROQ_MODEL?.trim() || 'llama-3.1-70b-versatile';
+    const model = process.env.GROQ_MODEL?.trim() || 'llama-3.3-70b-versatile';
 
     try {
       if (!apiToken) {
