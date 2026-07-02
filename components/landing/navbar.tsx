@@ -83,6 +83,12 @@ export const Navbar = () => {
                 Hi, <span className="font-medium text-foreground">{userName}</span>
               </span>
               <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/coach">Coach</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/profile">Profile</Link>
               </Button>
               <Button variant="primary" size="sm" onClick={handleSignOut}>
@@ -126,6 +132,16 @@ export const Navbar = () => {
             <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
               {isLoggedIn ? (
                 <>
+                  <Button asChild variant="secondary" size="default">
+                    <Link href="/dashboard" onClick={() => setShowMobileMenu(false)}>
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button asChild variant="secondary" size="default">
+                    <Link href="/coach" onClick={() => setShowMobileMenu(false)}>
+                      Coach
+                    </Link>
+                  </Button>
                   <Button asChild variant="secondary" size="default">
                     <Link href="/profile" onClick={() => setShowMobileMenu(false)}>
                       Profile

@@ -54,5 +54,23 @@ export const mentalRequestSchema = z
   })
   .passthrough();
 
+// Sent by the coach chat UI to /api/coach/chat
+export const coachChatRequestSchema = z
+  .object({
+    message: nonEmpty,
+    planSummary: z.string().optional(),
+    history: z
+      .array(
+        z.object({
+          role: z.enum(['user', 'assistant']),
+          content: z.string(),
+        }),
+      )
+      .max(20)
+      .optional(),
+  })
+  .passthrough();
+
 export type FitnessRequest = z.infer<typeof fitnessRequestSchema>;
 export type MentalRequest = z.infer<typeof mentalRequestSchema>;
+export type CoachChatRequest = z.infer<typeof coachChatRequestSchema>;
