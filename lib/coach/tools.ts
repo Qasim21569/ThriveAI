@@ -47,3 +47,29 @@ export const COACH_TOOLS = [
     },
   },
 ] as const;
+
+const TOOL_CALL_MARKER = '__TOOL_CALL__:';
+
+export interface ExtractedToolCall {
+  text: string;
+  toolCall: { name: string; arguments: unknown } | null;
+}
+
+/**
+ * Split a raw stream result (from /api/coach/chat) into the visible text
+ * and, if present, the tool call payload appended as a sentinel line.
+ * Shared between the chat UI and the eval harness so both parse the wire
+ * format the same way.
+ */
+export function extractToolCall(raw: string): ExtractedToolCall {
+  const markerIndex = raw.indexOf(TOOL_CALL_MARKER);
+  if (markerIndex === -1) return { text: raw, toolCall: null };
+
+  const text = raw.slice(0, markerIndex).trim();
+  const jsonPart = raw.slice(markerIndex + TOOL_CALL_MARKER.length).trim();
+  try {
+    return { text, toolCall: JSON.parse(jsonPart) };
+  } catch {
+    return { text, toolCall: null };
+  }
+}

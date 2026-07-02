@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { message, planSummary, history } = parsed.data;
+  const { message, contextBlock, history } = parsed.data;
 
   try {
-    const stream = await streamCoachReply(message, history ?? [], planSummary);
+    const stream = await streamCoachReply(message, history ?? [], contextBlock);
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',

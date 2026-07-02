@@ -1,4 +1,5 @@
 // Groq API integration for the AI Life Coach app
+import { fitnessPlanSchema } from '@/lib/validation/aiOutputs';
 
 // Define coaching modes
 export type CoachingMode = 'career' | 'fitness' | 'finance' | 'mental' | 'general';
@@ -96,6 +97,10 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000,
           temperature: 0.3,
+          // Forces the model to emit syntactically valid JSON — this is what
+          // actually retires the regex "repair" hack that used to live here.
+          // It doesn't guarantee our *shape*, which is why zod still runs below.
+          response_format: { type: 'json_object' },
         })
       });
 
@@ -118,41 +123,21 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
       }
 
       const generatedText = data.choices[0].message.content.trim();
-      const wasResponseTruncated = data.choices[0].finish_reason === 'length';
-
-      if (wasResponseTruncated) {
-        console.warn("Response was truncated. Attempting to repair JSON...");
-      }
 
       try {
         const cleanedText = cleanJSONString(generatedText);
-        
-        try {
-          const fitnessPlan = JSON.parse(cleanedText);
-          
-          // Ensure all days of week exist
-          const completePlan = ensureCompleteFitnessPlan(fitnessPlan);
-          return completePlan;
-        } catch (parseError) {
-          console.error("Error parsing JSON response:", parseError);
-          
-          // Second attempt: Try to repair the JSON
-          const repairedJSON = repairJSONString(cleanedText);
-          console.log("Attempting to parse repaired JSON:", repairedJSON);
-          
-          try {
-            const repairParsed = JSON.parse(repairedJSON);
-            // Ensure all days of week exist
-            const completePlan = ensureCompleteFitnessPlan(repairParsed);
-            return completePlan;
-          } catch (repairError) {
-            console.error("Failed to repair JSON:", repairError);
-            // Return fallback plan if we can't fix it
-            return generateFallbackPlan(formData);
-          }
+        const parsedJson = JSON.parse(cleanedText);
+
+        const validated = fitnessPlanSchema.safeParse(parsedJson);
+        if (!validated.success) {
+          console.error("Fitness plan failed shape validation:", validated.error.flatten());
+          return generateFallbackPlan(formData);
         }
+
+        // Ensure all days of week exist (fills optional gaps, not syntax repair)
+        return ensureCompleteFitnessPlan(validated.data);
       } catch (error) {
-        console.error("Error in JSON processing:", error);
+        console.error("Error parsing JSON response:", error);
         return generateFallbackPlan(formData);
       }
     } catch (error) {
@@ -284,50 +269,9 @@ export function cleanJSONString(text: string): string {
 }
 
 /**
- * Complete and fix truncated JSON
- */
-function repairJSONString(text: string): string {
-  let jsonText = text;
-  
-  // Replace single quotes with double quotes
-  jsonText = jsonText.replace(/'/g, '"');
-  
-  // Count opening and closing braces
-  const openBraces = (jsonText.match(/{/g) || []).length;
-  const closeBraces = (jsonText.match(/}/g) || []).length;
-  const openBrackets = (jsonText.match(/\[/g) || []).length;
-  const closeBrackets = (jsonText.match(/\]/g) || []).length;
-  
-  // Fix quotes around property names with numbers
-  jsonText = jsonText.replace(/"([^"]+)"(\d+)":/g, '"$1$2":');
-  
-  // Fix Day "1" format
-  jsonText = jsonText.replace(/Day "(\d+)"/g, 'Day$1');
-  
-  // Fix missing quotes around values with parentheses
-  jsonText = jsonText.replace(/:\s*(\d+)\s*\((.*?)\)/g, ': "$1 ($2)"');
-  
-  // Fix missing quotes around numerical values
-  jsonText = jsonText.replace(/:\s*(\d+)([,}])/g, ': "$1"$2');
-  
-  // Remove trailing commas that might cause parsing issues
-  jsonText = jsonText.replace(/,(\s*[\]}])/g, '$1');
-  
-  // Add missing closing brackets
-  for (let i = 0; i < openBrackets - closeBrackets; i++) {
-    jsonText += ']';
-  }
-  
-  // Add missing closing braces
-  for (let i = 0; i < openBraces - closeBraces; i++) {
-    jsonText += '}';
-  }
-  
-  return jsonText;
-}
-
-/**
- * Ensure all days of the week are present in the fitness plan
+ * Ensure all days of the week are present in the fitness plan.
+ * This fills in optional gaps (e.g. a missing "sunday" key) — it does not
+ * repair malformed syntax, which response_format: json_object now prevents.
  */
 function ensureCompleteFitnessPlan(plan: any): FitnessPlan {
   const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];

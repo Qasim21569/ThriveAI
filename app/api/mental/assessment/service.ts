@@ -1,4 +1,5 @@
 // Mental Wellbeing Assessment Service
+import { mentalAssessmentSchema } from '@/lib/validation/aiOutputs';
 
 // Types
 interface MentalFormData {
@@ -111,6 +112,7 @@ export async function generateMentalAssessment(formData: MentalFormData): Promis
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000,
           temperature: 0.3,
+          response_format: { type: 'json_object' },
         })
       });
 
@@ -136,16 +138,17 @@ export async function generateMentalAssessment(formData: MentalFormData): Promis
 
       try {
         const cleanedText = cleanJSONString(generatedText);
-        
-        try {
-          const assessment = JSON.parse(cleanedText);
-          return ensureValidAssessment(assessment);
-        } catch (parseError) {
-          console.error("Error parsing JSON response:", parseError);
+        const parsedJson = JSON.parse(cleanedText);
+
+        const validated = mentalAssessmentSchema.safeParse(parsedJson);
+        if (!validated.success) {
+          console.error("Mental assessment failed shape validation:", validated.error.flatten());
           return generateFallbackAssessment(formData);
         }
+
+        return ensureValidAssessment(validated.data);
       } catch (error) {
-        console.error("Error in JSON processing:", error);
+        console.error("Error parsing JSON response:", error);
         return generateFallbackAssessment(formData);
       }
     } catch (error) {

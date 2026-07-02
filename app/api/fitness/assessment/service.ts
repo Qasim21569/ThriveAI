@@ -1,4 +1,5 @@
 // Fitness Assessment Service
+import { fitnessAssessmentSchema } from '@/lib/validation/aiOutputs';
 
 // Types
 interface FitnessFormData {
@@ -279,6 +280,7 @@ export async function generateFitnessAssessment(formData: FitnessFormData): Prom
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000,
           temperature: 0.3,
+          response_format: { type: 'json_object' },
         })
       });
 
@@ -304,16 +306,17 @@ export async function generateFitnessAssessment(formData: FitnessFormData): Prom
 
       try {
         const cleanedText = cleanJSONString(generatedText);
+        const parsedJson = JSON.parse(cleanedText);
 
-        try {
-          const assessment = JSON.parse(cleanedText);
-          return ensureValidAssessment(assessment);
-        } catch (parseError) {
-          console.error("Error parsing JSON response:", parseError);
+        const validated = fitnessAssessmentSchema.safeParse(parsedJson);
+        if (!validated.success) {
+          console.error("Fitness assessment failed shape validation:", validated.error.flatten());
           return generateFallbackAssessment(formData);
         }
+
+        return ensureValidAssessment(validated.data);
       } catch (error) {
-        console.error("Error in JSON processing:", error);
+        console.error("Error parsing JSON response:", error);
         return generateFallbackAssessment(formData);
       }
     } catch (error) {

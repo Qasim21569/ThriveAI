@@ -58,7 +58,9 @@ export const mentalRequestSchema = z
 export const coachChatRequestSchema = z
   .object({
     message: nonEmpty,
-    planSummary: z.string().optional(),
+    // The fully-assembled, multi-layer context block from buildCoachContext()
+    // (plan summary + recent check-ins + rolling memory) — see lib/coach/context.ts
+    contextBlock: z.string().optional(),
     history: z
       .array(
         z.object({
@@ -71,6 +73,14 @@ export const coachChatRequestSchema = z
   })
   .passthrough();
 
+// Sent by the client to /api/coach/summarize to compress older check-ins
+export const summarizeRequestSchema = z
+  .object({
+    checkinsText: nonEmpty,
+  })
+  .passthrough();
+
 export type FitnessRequest = z.infer<typeof fitnessRequestSchema>;
 export type MentalRequest = z.infer<typeof mentalRequestSchema>;
 export type CoachChatRequest = z.infer<typeof coachChatRequestSchema>;
+export type SummarizeRequest = z.infer<typeof summarizeRequestSchema>;

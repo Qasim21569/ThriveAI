@@ -5,30 +5,13 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import type { User } from 'firebase/auth';
-import { getUserPlans, getPlan } from '@/lib/firebase/plans';
 import { saveMessage, getRecentMessages, type ChatMessage } from '@/lib/firebase/messages';
 import { saveCheckin } from '@/lib/firebase/checkins';
-import { summarizePlanForPrompt } from '@/lib/coach/context';
-import { logCheckinArgsSchema } from '@/lib/coach/tools';
+import { buildCoachContext } from '@/lib/coach/context';
+import { logCheckinArgsSchema, extractToolCall } from '@/lib/coach/tools';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-
-const TOOL_CALL_MARKER = '__TOOL_CALL__:';
-
-/** Split a raw stream result into the visible text and, if present, the tool call payload. */
-function extractToolCall(raw: string): { text: string; toolCall: { name: string; arguments: unknown } | null } {
-  const markerIndex = raw.indexOf(TOOL_CALL_MARKER);
-  if (markerIndex === -1) return { text: raw, toolCall: null };
-
-  const text = raw.slice(0, markerIndex).trim();
-  const jsonPart = raw.slice(markerIndex + TOOL_CALL_MARKER.length).trim();
-  try {
-    return { text, toolCall: JSON.parse(jsonPart) };
-  } catch {
-    return { text, toolCall: null };
-  }
-}
 
 function ChatBubble({ role, content, isAction }: { role: 'user' | 'assistant'; content: string; isAction?: boolean }) {
   const me = role === 'user';
@@ -68,10 +51,11 @@ export default function CoachPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [planSummary, setPlanSummary] = useState<string | undefined>(undefined);
+  const [contextBlock, setContextBlock] = useState<string | undefined>(undefined);
+  const [hasPlan, setHasPlan] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Load auth, active plan summary, and recent message history on mount.
+  // Load auth, the assembled context pipeline, and recent message history on mount.
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
       if (!u) {
@@ -81,18 +65,14 @@ export default function CoachPage() {
       }
       setUser(u);
       try {
-        const [plans, history] = await Promise.all([
-          getUserPlans(u.uid),
+        const idToken = await u.getIdToken();
+        const [history, ctx] = await Promise.all([
           getRecentMessages(u.uid, 20),
+          buildCoachContext(u.uid, idToken),
         ]);
         setMessages(history);
-
-        if (plans[0]) {
-          const fullPlan = await getPlan(u.uid, plans[0].id);
-          if (fullPlan) {
-            setPlanSummary(summarizePlanForPrompt(fullPlan.type, fullPlan.data));
-          }
-        }
+        setContextBlock(ctx.contextBlock || undefined);
+        setHasPlan(ctx.hasPlan);
       } catch (error) {
         console.error('Error loading coach context:', error);
       } finally {
@@ -133,7 +113,7 @@ export default function CoachPage() {
       const res = await fetch('/api/coach/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ message: userText, planSummary, history: priorHistory }),
+        body: JSON.stringify({ message: userText, contextBlock, history: priorHistory }),
       });
 
       if (!res.ok || !res.body) throw new Error(`Chat request failed: ${res.status}`);
@@ -234,7 +214,7 @@ export default function CoachPage() {
         <div>
           <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Coach</h1>
           <p className="text-xs text-text-muted">
-            {planSummary ? 'Knows your active plan' : 'No plan yet — create one for personalized advice'}
+            {hasPlan ? 'Knows your active plan and recent check-ins' : 'No plan yet — create one for personalized advice'}
           </p>
         </div>
       </div>

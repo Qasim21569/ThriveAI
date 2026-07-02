@@ -9,11 +9,15 @@ interface ChatTurn {
 }
 
 /**
- * Assemble the system prompt: coach identity (layer 1) + plan summary
- * (layer 2). This is the context pipeline in its minimal form — Phase 4
- * adds check-in history and a token budget on top of this.
+ * Assemble the system prompt: coach identity + safety rules (fixed, no
+ * data dependency) followed by the pre-assembled context block (plan
+ * summary + recent check-ins + rolling memory of older history). The
+ * context block itself is built client-side by buildCoachContext() in
+ * lib/coach/context.ts, since that's where the Firestore reads happen —
+ * this function just prepends the fixed identity layer to whatever
+ * data-dependent context arrives in the request.
  */
-function buildSystemPrompt(planSummary?: string): string {
+function buildSystemPrompt(contextBlock?: string): string {
   const identity =
     'You are the ThriveAI coach — warm, direct, and encouraging. You help with fitness ' +
     'and general wellbeing. Keep replies short (2-4 sentences) unless asked for detail. ' +
@@ -22,11 +26,11 @@ function buildSystemPrompt(planSummary?: string): string {
     'user reports completing a workout, describes their mood, or shares something worth ' +
     'remembering, call the log_checkin tool — do not just acknowledge it in text.';
 
-  if (!planSummary) {
-    return `${identity}\n\nThe user has not generated a fitness plan yet. If relevant, encourage them to create one.`;
+  if (!contextBlock) {
+    return `${identity}\n\nThe user has not generated a fitness plan yet and has no check-in history. If relevant, encourage them to create a plan.`;
   }
 
-  return `${identity}\n\nThe user's current plan:\n${planSummary}\n\nUse this plan when giving advice — reference specific workouts or goals from it where relevant.`;
+  return `${identity}\n\nContext about this user:\n\n${contextBlock}\n\nUse this context when giving advice — reference specific workouts, goals, or recent check-ins where relevant.`;
 }
 
 /**
@@ -52,7 +56,7 @@ function buildSystemPrompt(planSummary?: string): string {
 export async function streamCoachReply(
   message: string,
   history: ChatTurn[],
-  planSummary?: string,
+  contextBlock?: string,
 ): Promise<ReadableStream<Uint8Array>> {
   const apiToken = process.env.GROQ_API_KEY?.trim();
   if (!apiToken) throw new Error('Groq API key is missing');
@@ -60,7 +64,7 @@ export async function streamCoachReply(
   const model = process.env.GROQ_MODEL?.trim() || GROQ_MODEL;
 
   const messages = [
-    { role: 'system', content: buildSystemPrompt(planSummary) },
+    { role: 'system', content: buildSystemPrompt(contextBlock) },
     ...history.map((h) => ({ role: h.role, content: h.content })),
     { role: 'user', content: message },
   ];
