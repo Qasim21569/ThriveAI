@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, CalendarDays, Plus } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { getUserSavedPlans } from '@/lib/firebase/userService';
+import { getUserPlans, type PlanSummary } from '@/lib/firebase/plans';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -13,17 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Interface for user's saved plans
-interface SavedPlan {
-  id?: string;
-  type: string;
-  title: string;
-  description: string;
-  date?: string;
-  path: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+// Alias so the rest of the component stays readable
+type SavedPlan = PlanSummary;
 
 export default function ProfilePage() {
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
@@ -76,7 +67,7 @@ export default function ProfilePage() {
     setError(null);
 
     try {
-      const firebasePlans = await getUserSavedPlans(userId);
+      const firebasePlans = await getUserPlans(userId);
 
       if (firebasePlans && firebasePlans.length > 0) {
         setSavedPlans(firebasePlans);
@@ -215,15 +206,19 @@ export default function ProfilePage() {
                     </div>
                   ) : savedPlans.length > 0 ? (
                     <div className="grid gap-4 sm:grid-cols-2">
-                      {savedPlans.map((plan, index) => (
-                        <Link key={plan.id || index} href={plan.path} className="group">
+                      {savedPlans.map((plan) => (
+                        <Link key={plan.id} href={`/fitness/plan/${plan.id}`} className="group">
                           <Card className="h-full p-5 transition-[box-shadow,border-color] duration-base ease-standard group-hover:border-border-strong group-hover:shadow-md">
-                            <h4 className="mb-1 font-serif text-lg font-semibold text-foreground">
+                            <div className="mb-2 flex items-center gap-2">
+                              <Badge tone={plan.type === 'fitness' ? 'primary' : 'accent'}>
+                                {plan.type}
+                              </Badge>
+                            </div>
+                            <h4 className="mb-3 font-serif text-lg font-semibold text-foreground">
                               {plan.title}
                             </h4>
-                            <p className="mb-3 text-sm text-text-body">{plan.description}</p>
                             <p className="font-mono text-xs uppercase tracking-wide text-text-muted">
-                              Created {plan.date || formatDate(plan.createdAt)}
+                              Created {formatDate(plan.createdAt)}
                             </p>
                           </Card>
                         </Link>

@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/card';
 import { FormProgress } from './FormProgress';
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { savePlanToUserProfile } from '@/lib/firebase/userService';
+import { savePlan } from '@/lib/firebase/plans';
 
 // Shared warm styling for native <select> controls (matches Input).
 const selectClass =
@@ -202,10 +202,7 @@ export function FitnessForm() {
 
       const assessmentData = await assessmentResponse.json();
 
-      // Save assessment to local storage
-      localStorage.setItem('fitnessAssessment', JSON.stringify(assessmentData.assessment));
-
-      // Then, get the fitness plan
+      // Get the fitness plan
       setGenerationStep('plan');
       const planResponse = await fetch('/api/llm', {
         method: 'POST',
@@ -214,60 +211,27 @@ export function FitnessForm() {
       });
 
       if (!planResponse.ok) {
-        console.error("Plan response error:", planResponse.status, planResponse.statusText);
         const errorData = await planResponse.text();
-        console.error("Error details:", errorData);
+        console.error("Plan response error:", planResponse.status, errorData);
         throw new Error('Failed to generate fitness plan');
       }
 
       const planData = await planResponse.json();
 
-      // Save the fitness plan to local storage
-      localStorage.setItem('fitnessPlan', JSON.stringify(planData.plan));
-
-      // If user is logged in, save to Firebase
+      // Save plan to Firestore subcollection so it gets a stable ID and URL
       setGenerationStep('saving');
       if (user) {
-        try {
-          // Save assessment
-          const assessmentSaveResult = await savePlanToUserProfile(user.uid, {
-            id: `fitness-assessment-${Date.now()}`,
-            type: 'fitness-assessment',
-            path: '/fitness/assessment',
-            title: 'Fitness Assessment',
-            assessment: assessmentData.assessment,
-            createdAt: new Date().toISOString()
-          });
-
-          // Save plan
-          const planSaveResult = await savePlanToUserProfile(user.uid, {
-            id: `fitness-plan-${Date.now()}`,
-            type: 'fitness-plan',
-            path: '/fitness/plan',
-            title: 'Fitness Plan',
-            plan: planData.plan,
-            createdAt: new Date().toISOString()
-          });
-
-          if (assessmentSaveResult && planSaveResult) {
-            toast.success('Your fitness assessment and plan have been saved to your profile!');
-          } else {
-            toast.error('There was an issue saving to your profile. Your plan is still available locally.');
-          }
-        } catch (firebaseError) {
-          console.error("Firebase save error:", firebaseError);
-          toast.error('Could not save to your profile. Check your internet connection.');
-        }
+        const planId = await savePlan(user.uid, 'fitness', 'Fitness Plan', planData.plan);
+        setGenerationStep('complete');
+        toast.success('Your fitness plan is ready!');
+        setTimeout(() => router.push(`/fitness/plan/${planId}`), 600);
+      } else {
+        // Not logged in — store temporarily and go to generic plan page
+        localStorage.setItem('fitnessPlan', JSON.stringify(planData.plan));
+        setGenerationStep('complete');
+        toast.success('Your fitness plan is ready! Sign in to save it permanently.');
+        setTimeout(() => router.push('/fitness/plan'), 600);
       }
-
-      // Show success message
-      setGenerationStep('complete');
-      toast.success('Your fitness assessment and plan are ready!');
-
-      // Redirect directly to the plan page with reduced delay for a faster experience
-      setTimeout(() => {
-        router.push('/fitness/plan');
-      }, 800);
 
     } catch (error) {
       console.error("Error in form submission:", error);

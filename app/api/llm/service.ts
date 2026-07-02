@@ -6,21 +6,23 @@ export type CoachingMode = 'career' | 'fitness' | 'finance' | 'mental' | 'genera
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-70b-versatile';
 
-// Define FitnessFormData type
+// Field names must match exactly what FitnessForm.tsx sends
 interface FitnessFormData {
   age: string;
   gender: string;
   height: string;
   weight: string;
-  fitnessLevel?: string;
-  fitnessGoals?: string | string[];
-  healthConditions?: string;
-  dietaryRestrictions?: string;
-  availableEquipment?: string;
-  timeCommitment?: string;
+  primaryGoal?: string;
+  timeframe?: string;
+  activityLevel?: string;
+  experienceLevel?: string;
+  workoutDaysPerWeek?: string;
+  workoutDuration?: string;
   preferredExercises?: string;
   dislikedExercises?: string;
+  dietPreference?: string;
   injuries?: string;
+  healthConditions?: string;
   additionalInfo?: string;
 }
 
@@ -172,36 +174,39 @@ function createFitnessPlanPrompt(formData: FitnessFormData): string {
     gender,
     height,
     weight,
-    fitnessLevel,
-    fitnessGoals,
-    healthConditions,
-    dietaryRestrictions,
-    availableEquipment,
-    timeCommitment,
+    primaryGoal,
+    timeframe,
+    activityLevel,
+    experienceLevel,
+    workoutDaysPerWeek,
+    workoutDuration,
     preferredExercises,
     dislikedExercises,
+    dietPreference,
     injuries,
-    additionalInfo
+    healthConditions,
+    additionalInfo,
   } = formData;
 
-  // Generate a random seed to ensure unique results
   const seed = Math.floor(Math.random() * 10000);
 
   return `Create a detailed personalized fitness plan as JSON for:
- 
+
 Age: ${age || "Not specified"}
 Gender: ${gender || "Not specified"}
-Height: ${height || "Not specified"}
-Weight: ${weight || "Not specified"}
-Fitness Level: ${fitnessLevel || "Beginner"}
-Goals: ${Array.isArray(fitnessGoals) ? fitnessGoals.join(', ') : fitnessGoals || "General fitness improvement"}
-Health Conditions: ${healthConditions || "None"}
-Dietary Restrictions: ${dietaryRestrictions || "None"}
-Available Equipment: ${availableEquipment || "Basic home equipment"}
-Time Commitment: ${timeCommitment || "3-4 hours per week"}
+Height: ${height || "Not specified"} cm
+Weight: ${weight || "Not specified"} kg
+Primary Goal: ${primaryGoal || "General fitness improvement"}
+Goal Timeframe: ${timeframe || "3 months"}
+Current Activity Level: ${activityLevel || "Sedentary"}
+Exercise Experience: ${experienceLevel || "Beginner"}
+Workout Days Per Week: ${workoutDaysPerWeek || "3-4"}
+Workout Duration: ${workoutDuration || "30-45 minutes"}
 Preferred Activities: ${preferredExercises || "Various exercises"}
 Disliked Activities: ${dislikedExercises || "None specified"}
-Injuries: ${injuries || "None"}
+Diet Preference: ${dietPreference || "General"}
+Injuries / Limitations: ${injuries || "None"}
+Health Conditions: ${healthConditions || "None"}
 Additional Info: ${additionalInfo || "None provided"}
  
 Include: 
@@ -351,11 +356,8 @@ function ensureCompleteFitnessPlan(plan: any): FitnessPlan {
  * Generate a fallback fitness plan
  */
 function generateFallbackPlan(formData: FitnessFormData): FitnessPlan {
-  const { fitnessLevel, fitnessGoals, healthConditions, preferredExercises } = formData;
-  
-  console.log("Generating fallback fitness plan");
-  
-  // Add some randomization to make it seem different each time
+  const { healthConditions } = formData;
+
   const planVariation = Math.floor(Math.random() * 3) + 1;
   
   return {
@@ -393,8 +395,8 @@ function generateFallbackPlan(formData: FitnessFormData): FitnessPlan {
         "Stay hydrated throughout the day",
         "Eat small, frequent meals"
       ],
-      restrictions: formData.dietaryRestrictions 
-        ? [formData.dietaryRestrictions] 
+      restrictions: formData.dietPreference && formData.dietPreference !== 'general'
+        ? [formData.dietPreference]
         : ["None specified"]
     },
     workouts: [
