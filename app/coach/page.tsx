@@ -2,18 +2,48 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import type { User } from 'firebase/auth';
 import { getUserPlans, getPlan } from '@/lib/firebase/plans';
 import { saveMessage, getRecentMessages, type ChatMessage } from '@/lib/firebase/messages';
+import { saveCheckin } from '@/lib/firebase/checkins';
 import { summarizePlanForPrompt } from '@/lib/coach/context';
+import { logCheckinArgsSchema } from '@/lib/coach/tools';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
-function ChatBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
+const TOOL_CALL_MARKER = '__TOOL_CALL__:';
+
+/** Split a raw stream result into the visible text and, if present, the tool call payload. */
+function extractToolCall(raw: string): { text: string; toolCall: { name: string; arguments: unknown } | null } {
+  const markerIndex = raw.indexOf(TOOL_CALL_MARKER);
+  if (markerIndex === -1) return { text: raw, toolCall: null };
+
+  const text = raw.slice(0, markerIndex).trim();
+  const jsonPart = raw.slice(markerIndex + TOOL_CALL_MARKER.length).trim();
+  try {
+    return { text, toolCall: JSON.parse(jsonPart) };
+  } catch {
+    return { text, toolCall: null };
+  }
+}
+
+function ChatBubble({ role, content, isAction }: { role: 'user' | 'assistant'; content: string; isAction?: boolean }) {
   const me = role === 'user';
+
+  if (isAction) {
+    return (
+      <div className="flex justify-start">
+        <div className="flex max-w-[80%] items-center gap-2 rounded-lg border border-success/30 bg-success-soft px-4 py-2.5 text-sm text-success">
+          <CheckCircle2 className="size-4 flex-shrink-0" />
+          <span>{content}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex ${me ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -77,8 +107,8 @@ export default function CoachPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    const text = input.trim();
-    if (!text || isStreaming || !user) return;
+    const userText = input.trim();
+    if (!userText || isStreaming || !user) return;
 
     setInput('');
     const priorHistory = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
@@ -86,7 +116,7 @@ export default function CoachPage() {
     const userMsg: ChatMessage = {
       id: `local-${Date.now()}`,
       role: 'user',
-      content: text,
+      content: userText,
       createdAt: new Date().toISOString(),
     };
     const assistantId = `local-${Date.now()}-a`;
@@ -95,7 +125,7 @@ export default function CoachPage() {
       userMsg,
       { id: assistantId, role: 'assistant', content: '', createdAt: new Date().toISOString() },
     ]);
-    saveMessage(user.uid, 'user', text).catch((e) => console.error('Failed to save message:', e));
+    saveMessage(user.uid, 'user', userText).catch((e) => console.error('Failed to save message:', e));
 
     setIsStreaming(true);
     try {
@@ -103,26 +133,57 @@ export default function CoachPage() {
       const res = await fetch('/api/coach/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ message: text, planSummary, history: priorHistory }),
+        body: JSON.stringify({ message: userText, planSummary, history: priorHistory }),
       });
 
       if (!res.ok || !res.body) throw new Error(`Chat request failed: ${res.status}`);
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let fullText = '';
+      let rawText = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        fullText += decoder.decode(value, { stream: true });
+        rawText += decoder.decode(value, { stream: true });
+        // Strip the marker live so it never flashes on screen mid-stream —
+        // it only ever appears in the last chunk, but this keeps every
+        // intermediate render clean regardless.
         setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: fullText } : m)),
+          prev.map((m) => (m.id === assistantId ? { ...m, content: extractToolCall(rawText).text } : m)),
         );
       }
 
-      if (fullText) {
-        saveMessage(user.uid, 'assistant', fullText).catch((e) =>
+      const { text, toolCall } = extractToolCall(rawText);
+      let finalText = text;
+
+      if (toolCall?.name === 'log_checkin') {
+        // Defense in depth: the server already validated this, but we
+        // re-validate here since the payload crossed another boundary
+        // (the HTTP response body) before reaching code that acts on it.
+        const parsed = logCheckinArgsSchema.safeParse(toolCall.arguments);
+        if (parsed.success) {
+          const { type, summary } = parsed.data;
+          try {
+            await saveCheckin(user.uid, type, summary);
+            const confirmation = `✓ Logged (${type}): ${summary}`;
+            finalText = text ? `${text}\n\n${confirmation}` : confirmation;
+          } catch (error) {
+            console.error('Failed to save check-in:', error);
+            finalText = text || "I tried to log that but couldn't save it — please try again.";
+          }
+        } else {
+          console.error('Tool call arguments failed client-side validation:', parsed.error.flatten());
+          finalText = text || "I couldn't quite understand what to log — could you rephrase?";
+        }
+      }
+
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, content: finalText } : m)),
+      );
+
+      if (finalText) {
+        saveMessage(user.uid, 'assistant', finalText).catch((e) =>
           console.error('Failed to save message:', e),
         );
       }
@@ -186,7 +247,12 @@ export default function CoachPage() {
             </div>
           )}
           {messages.map((m) => (
-            <ChatBubble key={m.id} role={m.role} content={m.content} />
+            <ChatBubble
+              key={m.id}
+              role={m.role}
+              content={m.content}
+              isAction={m.role === 'assistant' && m.content.includes('✓ Logged')}
+            />
           ))}
         </div>
       </div>

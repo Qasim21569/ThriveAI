@@ -3,13 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MessageCircle, Dumbbell, Plus, ArrowRight } from 'lucide-react';
+import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { getUserPlans, type PlanSummary } from '@/lib/firebase/plans';
+import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
 import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+
+const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>> = {
+  workout: Dumbbell,
+  mood: Smile,
+  note: StickyNote,
+};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,6 +24,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState('there');
   const [plans, setPlans] = useState<PlanSummary[]>([]);
+  const [recentCheckins, setRecentCheckins] = useState<Checkin[]>([]);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
@@ -27,10 +35,14 @@ export default function DashboardPage() {
       }
       setDisplayName(user.displayName?.split(' ')[0] || 'there');
       try {
-        const userPlans = await getUserPlans(user.uid);
+        const [userPlans, checkins] = await Promise.all([
+          getUserPlans(user.uid),
+          getRecentCheckins(user.uid, 3),
+        ]);
         setPlans(userPlans);
+        setRecentCheckins(checkins);
       } catch (error) {
-        console.error('Error loading plans:', error);
+        console.error('Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -131,8 +143,45 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="size-5 text-primary" />
+                <CardTitle>Recent activity</CardTitle>
+              </div>
+              {recentCheckins.length > 0 && (
+                <Link href="/progress" className="text-sm text-text-muted hover:text-foreground">
+                  View all →
+                </Link>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {recentCheckins.length === 0 ? (
+              <p className="text-sm text-text-muted">
+                Nothing logged yet — tell your coach about a workout or how you&apos;re feeling.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {recentCheckins.map((c) => {
+                  const Icon = TYPE_ICON[c.type];
+                  return (
+                    <div key={c.id} className="flex items-center gap-3 rounded-md border border-border bg-surface-sunken p-3">
+                      <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                        <Icon className="size-4" />
+                      </div>
+                      <p className="min-w-0 flex-1 truncate text-sm text-text-body">{c.summary}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {plans.length > 1 && (
-          <div className="mt-6">
+          <div className="mt-4">
             <Link href="/profile" className="text-sm text-text-muted hover:text-foreground">
               View all {plans.length} plans in your profile →
             </Link>
