@@ -25,9 +25,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# env files
-.env*.local
-.env
+# env files — never commit real secrets; only the example template is tracked
+.env*
+!.env.local.example
 update-env.txt
 firebase-config-instructions.txt
 

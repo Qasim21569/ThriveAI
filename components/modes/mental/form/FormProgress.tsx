@@ -7,16 +7,16 @@ type FormProgressProps = {
 export function FormProgress({ progress }: FormProgressProps) {
   return (
     <div className="w-full">
-      <div className="flex justify-between mb-1 text-xs text-slate-400">
-        <span>Progress</span>
-        <span>{progress}%</span>
+      <div className="mb-1 flex justify-between text-xs text-text-muted">
+        <span className="font-mono uppercase tracking-wide">Progress</span>
+        <span className="font-mono">{progress}%</span>
       </div>
-      <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-        <div 
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-in-out"
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-500 ease-standard"
           style={{ width: `${progress}%` }}
-        ></div>
+        />
       </div>
     </div>
   );
-} 
+}

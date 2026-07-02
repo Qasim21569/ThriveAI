@@ -1,73 +1,50 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Button,
-  CircularProgress,
-  Alert,
-  Grid,
-  Divider,
-  Switch,
-  FormControlLabel,
-  FormGroup,
-  Card,
-  CardContent,
-  Tabs,
-  Tab,
-  IconButton
-} from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Bell, Palette, Lock, Save } from 'lucide-react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/firebase/authContext';
+import { db } from '@/lib/firebase/firebaseConfig';
 import AuthModal from '@/components/auth/AuthModal';
-import {
-  Notifications as NotificationsIcon,
-  Palette as PaletteIcon,
-  Lock as LockIcon,
-  Save as SaveIcon,
-  ArrowBack as ArrowBackIcon
-} from '@mui/icons-material';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
+type SettingsShape = {
+  notifications: { email: boolean; push: boolean; sms: boolean; newsletter: boolean };
+  appearance: { darkMode: boolean; animations: boolean; highContrast: boolean };
+  privacy: { shareData: boolean; allowAnalytics: boolean; showProfile: boolean };
+};
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
+function SettingRow({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+}) {
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`settings-tabpanel-${index}`}
-      aria-labelledby={`settings-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ pt: 3 }}>
-          {children}
-        </Box>
-      )}
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div>
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        {description && <p className="text-sm text-text-muted">{description}</p>}
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `settings-tab-${index}`,
-    'aria-controls': `settings-tabpanel-${index}`,
-  };
 }
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [value, setValue] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -75,23 +52,10 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
 
   // Settings state
-  const [settings, setSettings] = useState({
-    notifications: {
-      email: true,
-      push: true,
-      sms: false,
-      newsletter: true
-    },
-    appearance: {
-      darkMode: true,
-      animations: true,
-      highContrast: false
-    },
-    privacy: {
-      shareData: true,
-      allowAnalytics: true,
-      showProfile: true
-    }
+  const [settings, setSettings] = useState<SettingsShape>({
+    notifications: { email: true, push: true, sms: false, newsletter: true },
+    appearance: { darkMode: true, animations: true, highContrast: false },
+    privacy: { shareData: true, allowAnalytics: true, showProfile: true },
   });
 
   useEffect(() => {
@@ -106,16 +70,22 @@ export default function SettingsPage() {
     const fetchSettings = async () => {
       setIsLoading(true);
       try {
-        // Load settings from localStorage instead of userProfile
-        const savedSettings = localStorage.getItem(`settings_${user.uid}`);
-        if (savedSettings) {
-          setSettings(JSON.parse(savedSettings));
-        } else {
-          // Keep default settings if user doesn't have any
-          console.log('Using default settings (no saved settings found)');
+        // Load settings from the user's Firestore document, merging over
+        // the defaults so a partial saved document never drops fields.
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        const saved = snap.exists()
+          ? (snap.data().settings as Partial<SettingsShape> | undefined)
+          : undefined;
+        if (saved) {
+          setSettings((prev) => ({
+            notifications: { ...prev.notifications, ...saved.notifications },
+            appearance: { ...prev.appearance, ...saved.appearance },
+            privacy: { ...prev.privacy, ...saved.privacy },
+          }));
         }
       } catch (err) {
         console.error('Error fetching settings:', err);
+        setError('Could not load your saved settings.');
       } finally {
         setIsLoading(false);
       }
@@ -124,19 +94,17 @@ export default function SettingsPage() {
     fetchSettings();
   }, [user, loading]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-
-  const handleSettingChange = (category, setting) => (event) => {
-    setSettings({
-      ...settings,
-      [category]: {
-        ...settings[category],
-        [setting]: event.target.checked
-      }
-    });
-  };
+  const handleSettingChange =
+    <C extends keyof SettingsShape>(category: C, setting: keyof SettingsShape[C]) =>
+    (checked: boolean) => {
+      setSettings((prev) => ({
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [setting]: checked,
+        },
+      }));
+    };
 
   const saveSettings = async () => {
     if (!user) return;
@@ -146,9 +114,14 @@ export default function SettingsPage() {
     setIsSaving(true);
 
     try {
-      // Save settings to localStorage instead of userProfile
-      localStorage.setItem(`settings_${user.uid}`, JSON.stringify(settings));
-      setSuccess('Settings saved successfully!');
+      // Persist settings on the user's Firestore document (merge so we don't
+      // clobber other fields like saved plans).
+      await setDoc(
+        doc(db, 'users', user.uid),
+        { settings, settingsUpdatedAt: new Date().toISOString() },
+        { merge: true }
+      );
+      setSuccess('Settings saved to your account.');
     } catch (err) {
       console.error('Error saving settings:', err);
       setError('An error occurred while saving your settings');
@@ -163,252 +136,114 @@ export default function SettingsPage() {
 
   if (loading || isLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
-        <CircularProgress />
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          Loading...
-        </Typography>
-      </Container>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-primary/25 border-t-primary" />
+          <p className="text-text-muted">Loading…</p>
+        </div>
+      </div>
     );
   }
 
+  const triggerClass =
+    'gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground';
+
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 8 } }}>
-      <AuthModal
-        open={showAuthModal}
-        onClose={() => router.push('/')}
-        onAuthSuccess={handleAuthSuccess}
-      />
+    <div className="min-h-screen bg-background px-4 py-12">
+      <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={handleAuthSuccess} />
 
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <IconButton
-          onClick={() => router.push('/')}
-          sx={{ mr: 2 }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h4" fontWeight="bold" color="primary">
-          Settings
-        </Typography>
-      </Box>
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
-          {success}
-        </Alert>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
-
-      <Card sx={{ mb: 4, borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={value}
-            onChange={handleTabChange}
-            aria-label="settings tabs"
-            variant="scrollable"
-            scrollButtons="auto"
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6 flex items-center gap-3">
+          <button
+            onClick={() => router.push('/')}
+            aria-label="Back to home"
+            className="inline-flex size-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-muted hover:text-foreground"
           >
-            <Tab
-              icon={<NotificationsIcon />}
-              label="Notifications"
-              {...a11yProps(0)}
-              sx={{
-                minHeight: '72px',
-                '&.Mui-selected': { color: '#facc15' }
-              }}
-            />
-            <Tab
-              icon={<PaletteIcon />}
-              label="Appearance"
-              {...a11yProps(1)}
-              sx={{
-                minHeight: '72px',
-                '&.Mui-selected': { color: '#facc15' }
-              }}
-            />
-            <Tab
-              icon={<LockIcon />}
-              label="Privacy"
-              {...a11yProps(2)}
-              sx={{
-                minHeight: '72px',
-                '&.Mui-selected': { color: '#facc15' }
-              }}
-            />
+            <ArrowLeft className="size-5" />
+          </button>
+          <h1 className="font-serif text-2xl font-semibold text-foreground md:text-3xl">Settings</h1>
+        </div>
+
+        {success && (
+          <Alert tone="success" className="mb-4">
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+        {error && (
+          <Alert tone="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Card className="p-6">
+          <Tabs defaultValue="notifications" className="w-full">
+            <TabsList className="mb-4 grid grid-cols-3">
+              <TabsTrigger value="notifications" className={triggerClass}>
+                <Bell className="size-4" /> <span className="hidden sm:inline">Notifications</span>
+              </TabsTrigger>
+              <TabsTrigger value="appearance" className={triggerClass}>
+                <Palette className="size-4" /> <span className="hidden sm:inline">Appearance</span>
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className={triggerClass}>
+                <Lock className="size-4" /> <span className="hidden sm:inline">Privacy</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Notifications */}
+            <TabsContent value="notifications">
+              <h2 className="font-serif text-lg font-semibold text-foreground">
+                Notification preferences
+              </h2>
+              <p className="mt-1 text-sm text-text-muted">
+                Control how and when you hear from your coach.
+              </p>
+              <Separator className="my-3" />
+              <div className="divide-y divide-border">
+                <SettingRow label="Email notifications" checked={settings.notifications.email} onCheckedChange={handleSettingChange('notifications', 'email')} />
+                <SettingRow label="Push notifications" checked={settings.notifications.push} onCheckedChange={handleSettingChange('notifications', 'push')} />
+                <SettingRow label="SMS notifications" checked={settings.notifications.sms} onCheckedChange={handleSettingChange('notifications', 'sms')} />
+                <SettingRow label="Weekly newsletter" checked={settings.notifications.newsletter} onCheckedChange={handleSettingChange('notifications', 'newsletter')} />
+              </div>
+            </TabsContent>
+
+            {/* Appearance */}
+            <TabsContent value="appearance">
+              <h2 className="font-serif text-lg font-semibold text-foreground">Appearance</h2>
+              <p className="mt-1 text-sm text-text-muted">
+                Customize how ThriveAI looks and feels.
+              </p>
+              <Separator className="my-3" />
+              <div className="divide-y divide-border">
+                <SettingRow label="Dark mode" checked={settings.appearance.darkMode} onCheckedChange={handleSettingChange('appearance', 'darkMode')} />
+                <SettingRow label="Enable animations" checked={settings.appearance.animations} onCheckedChange={handleSettingChange('appearance', 'animations')} />
+                <SettingRow label="High contrast mode" checked={settings.appearance.highContrast} onCheckedChange={handleSettingChange('appearance', 'highContrast')} />
+              </div>
+            </TabsContent>
+
+            {/* Privacy */}
+            <TabsContent value="privacy">
+              <h2 className="font-serif text-lg font-semibold text-foreground">Privacy</h2>
+              <p className="mt-1 text-sm text-text-muted">
+                Control your data privacy and sharing preferences.
+              </p>
+              <Separator className="my-3" />
+              <div className="divide-y divide-border">
+                <SettingRow label="Share data to improve coaching recommendations" checked={settings.privacy.shareData} onCheckedChange={handleSettingChange('privacy', 'shareData')} />
+                <SettingRow label="Allow usage analytics" checked={settings.privacy.allowAnalytics} onCheckedChange={handleSettingChange('privacy', 'allowAnalytics')} />
+                <SettingRow label="Show my profile to other users" checked={settings.privacy.showProfile} onCheckedChange={handleSettingChange('privacy', 'showProfile')} />
+              </div>
+            </TabsContent>
           </Tabs>
-        </Box>
+        </Card>
 
-        <CardContent sx={{ p: 4 }}>
-          <TabPanel value={value} index={0}>
-            <Typography variant="h6" gutterBottom>
-              Notification Preferences
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Control how and when you receive notifications from CoachAI.
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.notifications.email}
-                    onChange={handleSettingChange('notifications', 'email')}
-                    color="primary"
-                  />
-                }
-                label="Email notifications"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.notifications.push}
-                    onChange={handleSettingChange('notifications', 'push')}
-                    color="primary"
-                  />
-                }
-                label="Push notifications"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.notifications.sms}
-                    onChange={handleSettingChange('notifications', 'sms')}
-                    color="primary"
-                  />
-                }
-                label="SMS notifications"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.notifications.newsletter}
-                    onChange={handleSettingChange('notifications', 'newsletter')}
-                    color="primary"
-                  />
-                }
-                label="Weekly newsletter"
-              />
-            </FormGroup>
-          </TabPanel>
-
-          <TabPanel value={value} index={1}>
-            <Typography variant="h6" gutterBottom>
-              Appearance Settings
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Customize how CoachAI looks and feels to match your preferences.
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.appearance.darkMode}
-                    onChange={handleSettingChange('appearance', 'darkMode')}
-                    color="primary"
-                  />
-                }
-                label="Dark mode"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.appearance.animations}
-                    onChange={handleSettingChange('appearance', 'animations')}
-                    color="primary"
-                  />
-                }
-                label="Enable animations"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.appearance.highContrast}
-                    onChange={handleSettingChange('appearance', 'highContrast')}
-                    color="primary"
-                  />
-                }
-                label="High contrast mode"
-              />
-            </FormGroup>
-          </TabPanel>
-
-          <TabPanel value={value} index={2}>
-            <Typography variant="h6" gutterBottom>
-              Privacy Settings
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Control your data privacy and sharing preferences.
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.privacy.shareData}
-                    onChange={handleSettingChange('privacy', 'shareData')}
-                    color="primary"
-                  />
-                }
-                label="Share data to improve coaching recommendations"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.privacy.allowAnalytics}
-                    onChange={handleSettingChange('privacy', 'allowAnalytics')}
-                    color="primary"
-                  />
-                }
-                label="Allow usage analytics"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.privacy.showProfile}
-                    onChange={handleSettingChange('privacy', 'showProfile')}
-                    color="primary"
-                  />
-                }
-                label="Show my profile to other users"
-              />
-            </FormGroup>
-          </TabPanel>
-        </CardContent>
-      </Card>
-
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<SaveIcon />}
-          onClick={saveSettings}
-          disabled={isSaving}
-          sx={{
-            bgcolor: '#facc15',
-            color: 'black',
-            borderRadius: '50px',
-            px: 4,
-            py: 1.5,
-            fontWeight: 'bold',
-            '&:hover': {
-              bgcolor: '#e6b800',
-              transform: 'scale(1.05)'
-            },
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {isSaving ? 'Saving...' : 'Save Settings'}
-        </Button>
-      </Box>
-    </Container>
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <p className="text-xs text-text-muted">Preferences are saved to your account.</p>
+          <Button variant="primary" onClick={saveSettings} disabled={isSaving}>
+            <Save className="size-4" />
+            {isSaving ? 'Saving…' : 'Save settings'}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
-} 
+}

@@ -1,35 +1,17 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, User, CalendarDays, Plus } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { getUserSavedPlans, savePlanToUserProfile } from '@/lib/firebase/userService';
-import { 
-  Box,
-  Typography,
-  Button,
-  Avatar,
-  Paper,
-  Divider, 
-  Tab, 
-  Tabs,
-  Grid,
-  Card,
-  CardContent,
-  CardActionArea,
-  Container,
-  CircularProgress,
-  IconButton,
-  useMediaQuery,
-  useTheme,
-  Alert
-} from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import HomeIcon from '@mui/icons-material/Home';
-import AddIcon from '@mui/icons-material/Add';
+import { getUserSavedPlans } from '@/lib/firebase/userService';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Interface for user's saved plans
 interface SavedPlan {
@@ -43,90 +25,48 @@ interface SavedPlan {
   updatedAt?: string;
 }
 
-// Interface for tab panels
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-// Component for tab panels
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`profile-tabpanel-${index}`}
-      aria-labelledby={`profile-tab-${index}`}
-      {...other}
-      style={{ width: '100%' }}
-    >
-      {value === index && (
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
-
 export default function ProfilePage() {
-  const [tabValue, setTabValue] = useState(0);
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlansLoading, setIsPlansLoading] = useState(true);
-  const [userData, setUserData] = useState({
-    displayName: "User",
-    email: "user@example.com",
+  const [userData, setUserData] = useState<{
+    displayName: string;
+    email: string;
+    photoURL: string | null;
+    emailVerified: boolean;
+    creationTime: string;
+  }>({
+    displayName: 'User',
+    email: 'user@example.com',
     photoURL: null,
     emailVerified: true,
-    creationTime: new Date().toISOString()
+    creationTime: new Date().toISOString(),
   });
   const [error, setError] = useState<string | null>(null);
-  
+
   const router = useRouter();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  // Handle back navigation
-  const handleBack = () => {
-    router.push('/');
-  };
-
-  // Handle tab changes
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
 
   // Try to get Firebase user data without blocking page load
   useEffect(() => {
-    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        console.log("User found:", user.displayName || user.email);
         setUserData({
-          displayName: user.displayName || user.email?.split('@')[0] || "User",
-          email: user.email || "No email available",
+          displayName: user.displayName || user.email?.split('@')[0] || 'User',
+          email: user.email || 'No email available',
           photoURL: user.photoURL,
           emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || new Date().toISOString()
+          creationTime: user.metadata.creationTime || new Date().toISOString(),
         });
-        
+
         // Load user's plans from Firebase
         loadUserPlans(user.uid);
       } else {
-        console.log("No user found, using default profile");
         setIsLoading(false);
         setIsPlansLoading(false);
-        
-        // Empty plans array for non-authenticated users
         setSavedPlans([]);
       }
     });
 
-    // Cleanup subscription
     return () => unsubscribe();
   }, []);
 
@@ -134,23 +74,18 @@ export default function ProfilePage() {
   const loadUserPlans = async (userId: string) => {
     setIsPlansLoading(true);
     setError(null);
-    
+
     try {
-      console.log("Loading plans for user:", userId);
-      
-      // Get plans from Firebase
       const firebasePlans = await getUserSavedPlans(userId);
-      console.log("Loaded plans from Firebase:", firebasePlans);
-      
+
       if (firebasePlans && firebasePlans.length > 0) {
         setSavedPlans(firebasePlans);
       } else {
-        // No plans yet, set empty array
         setSavedPlans([]);
       }
     } catch (err) {
-      console.error("Error loading user plans:", err);
-      setError("Failed to load your saved plans. Please try again later.");
+      console.error('Error loading user plans:', err);
+      setError('Failed to load your saved plans. Please try again later.');
       setSavedPlans([]);
     } finally {
       setIsLoading(false);
@@ -165,322 +100,149 @@ export default function ProfilePage() {
       return new Date(dateString).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
       });
     } catch (e) {
       return 'January 1, 2023';
     }
   };
 
-  return (
-    <Container maxWidth="xl" sx={{ 
-      minHeight: '100vh',
-      background: 'linear-gradient(to bottom, #14143a, #0f0f29)',
-      py: 6
-    }}>
-      {/* Back to Home Button */}
-      <Box sx={{ position: 'absolute', top: { xs: 10, md: 20 }, left: { xs: 10, md: 20 }, zIndex: 20 }}>
-        {isMobile ? (
-          <IconButton
-            onClick={handleBack}
-            sx={{
-              color: 'white',
-              backdropFilter: 'blur(4px)',
-              backgroundColor: 'rgba(20, 20, 58, 0.5)',
-              border: '1px solid rgba(139, 92, 246, 0.4)',
-              '&:hover': {
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-              }
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-        ) : (
-          <Button
-            onClick={handleBack}
-            startIcon={<ArrowBackIcon />}
-            variant="outlined"
-            sx={{
-              color: 'white',
-              borderColor: 'rgba(139, 92, 246, 0.4)',
-              backdropFilter: 'blur(4px)',
-              backgroundColor: 'rgba(20, 20, 58, 0.3)',
-              '&:hover': {
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                borderColor: 'rgba(139, 92, 246, 0.8)',
-              }
-            }}
-          >
-            Back to Home
-          </Button>
-        )}
-      </Box>
-      
-      <Box sx={{ position: 'relative', zIndex: 10, py: 4, px: 2 }}>
-        <Typography 
-          variant="h3" 
-          sx={{ 
-            textAlign: 'center', 
-            mb: 4, 
-            color: 'white',
-            fontWeight: 'bold'
-          }}
-        >
-          Your <span style={{ 
-            background: 'linear-gradient(to right, #8b5cf6, #6366f1)', 
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Profile
-          </span>
-        </Typography>
+  const Spinner = ({ className = '' }: { className?: string }) => (
+    <div className={`animate-spin rounded-full border-4 border-primary/25 border-t-primary ${className}`} />
+  );
 
-        {/* Error Alert */}
+  return (
+    <div className="min-h-screen bg-background px-4 py-12">
+      <div className="mx-auto max-w-app">
+        {/* Back to Home */}
+        <Link
+          href="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-text-muted transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to home
+        </Link>
+
+        <h1 className="mb-8 text-center font-serif text-3xl font-semibold tracking-[-0.015em] text-foreground md:text-4xl">
+          Your profile
+        </h1>
+
         {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              maxWidth: 'lg', 
-              mx: 'auto', 
-              mb: 4,
-              backgroundColor: 'rgba(211, 47, 47, 0.1)',
-              color: 'white',
-              borderColor: 'rgba(211, 47, 47, 0.2)' 
-            }}
-          >
-            {error}
+          <Alert tone="destructive" className="mx-auto mb-6 max-w-2xl">
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        {/* Main Content */}
-        <Container maxWidth="lg">
-          <Grid container spacing={3}>
-            {/* Sidebar */}
-            <Grid item xs={12} md={4}>
-          <Paper 
-            elevation={3}
-            sx={{ 
-              bgcolor: 'rgba(20, 20, 58, 0.6)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
-              borderRadius: 3,
-                  overflow: 'hidden'
-                }}
-              >
-                {/* User profile section */}
-                <Box sx={{ p: 3, textAlign: 'center' }}>
-                  {isLoading ? (
-                    <CircularProgress size={30} sx={{ color: '#8b5cf6' }} />
+        <div className="grid gap-6 md:grid-cols-[1fr_2fr]">
+          {/* Sidebar */}
+          <Card className="h-fit p-6 text-center">
+            {isLoading ? (
+              <div className="flex justify-center py-6">
+                <Spinner className="size-8" />
+              </div>
+            ) : (
+              <>
+                <Avatar
+                  src={userData.photoURL}
+                  fallback={userData.displayName?.charAt(0) || 'U'}
+                  size="lg"
+                  className="mx-auto mb-3 size-20 text-2xl"
+                />
+                <h2 className="text-lg font-semibold text-foreground">{userData.displayName}</h2>
+                <p className="mt-0.5 text-sm text-text-muted">{userData.email}</p>
+                <p className="mt-3 font-mono text-xs uppercase tracking-wide text-text-muted">
+                  Member since {formatDate(userData.creationTime)}
+                </p>
+              </>
+            )}
+          </Card>
+
+          {/* Content Area */}
+          <Card className="min-h-[400px] p-6">
+            {isLoading ? (
+              <div className="flex h-[360px] items-center justify-center">
+                <Spinner className="size-10" />
+              </div>
+            ) : (
+              <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="mb-6 grid w-full grid-cols-2 sm:w-auto sm:inline-grid">
+                  <TabsTrigger
+                    value="profile"
+                    className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <User className="size-4" /> Profile
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="plans"
+                    className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <CalendarDays className="size-4" /> Plans
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Profile Info */}
+                <TabsContent value="profile">
+                  <h3 className="mb-4 font-serif text-xl font-semibold text-foreground">
+                    Profile information
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="rounded-md border border-border bg-surface-sunken p-3">
+                      <p className="text-sm font-medium text-foreground">Name</p>
+                      <p className="text-sm text-text-body">{userData.displayName}</p>
+                    </div>
+                    <div className="rounded-md border border-border bg-surface-sunken p-3">
+                      <p className="text-sm font-medium text-foreground">Email</p>
+                      <p className="text-sm text-text-body">{userData.email}</p>
+                    </div>
+                    <div className="rounded-md border border-border bg-surface-sunken p-3">
+                      <p className="mb-1 text-sm font-medium text-foreground">Account status</p>
+                      <Badge tone={userData.emailVerified ? 'success' : 'destructive'} dot>
+                        {userData.emailVerified ? 'Verified' : 'Not verified'}
+                      </Badge>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* My Plans */}
+                <TabsContent value="plans">
+                  <h3 className="mb-4 font-serif text-xl font-semibold text-foreground">
+                    My saved plans
+                  </h3>
+
+                  {isPlansLoading ? (
+                    <div className="flex justify-center py-16">
+                      <Spinner className="size-10" />
+                    </div>
+                  ) : savedPlans.length > 0 ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {savedPlans.map((plan, index) => (
+                        <Link key={plan.id || index} href={plan.path} className="group">
+                          <Card className="h-full p-5 transition-[box-shadow,border-color] duration-base ease-standard group-hover:border-border-strong group-hover:shadow-md">
+                            <h4 className="mb-1 font-serif text-lg font-semibold text-foreground">
+                              {plan.title}
+                            </h4>
+                            <p className="mb-3 text-sm text-text-body">{plan.description}</p>
+                            <p className="font-mono text-xs uppercase tracking-wide text-text-muted">
+                              Created {plan.date || formatDate(plan.createdAt)}
+                            </p>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
                   ) : (
-                    <>
-                      <Avatar 
-                        src={userData.photoURL || undefined}
-              sx={{ 
-                          width: 80, 
-                          height: 80, 
-                          bgcolor: '#8b5cf6',
-                          fontSize: '1.5rem',
-                          mx: 'auto',
-                          mb: 2
-                        }}
-                      >
-                        {(userData.displayName?.charAt(0) || "U").toUpperCase()}
-                      </Avatar>
-                      
-                      <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
-                        {userData.displayName}
-                      </Typography>
-                      
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }}>
-                        {userData.email}
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block' }}>
-                        Member since: {formatDate(userData.creationTime)}
-                      </Typography>
-                    </>
+                    <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-12 text-center">
+                      <p className="mb-4 text-text-muted">You don&apos;t have any saved plans yet.</p>
+                      <Button onClick={() => router.push('/#modes')} variant="outline">
+                        <Plus className="size-4" /> Explore coaching areas
+                      </Button>
+                    </div>
                   )}
-                </Box>
-                
-                <Divider sx={{ borderColor: 'rgba(139, 92, 246, 0.2)' }} />
-                
-                {/* Navigation Tabs */}
-                <Tabs 
-                  value={tabValue} 
-                  onChange={handleTabChange}
-                  variant="fullWidth"
-                  sx={{ 
-                    '.MuiTabs-indicator': { 
-                      backgroundColor: '#8b5cf6',
-                    }
-                  }}
-                >
-                  <Tab 
-                    icon={<PersonIcon />} 
-                    label="Profile" 
-                      sx={{ 
-                      color: tabValue === 0 ? '#8b5cf6' : 'rgba(255,255,255,0.7)',
-                      '&.Mui-selected': { color: '#8b5cf6' }
-                    }} 
-                  />
-                  <Tab 
-                    icon={<CalendarTodayIcon />} 
-                    label="Plans" 
-                        sx={{ 
-                      color: tabValue === 1 ? '#8b5cf6' : 'rgba(255,255,255,0.7)',
-                      '&.Mui-selected': { color: '#8b5cf6' }
-                    }} 
-                  />
-                </Tabs>
-              </Paper>
-            </Grid>
-            
-            {/* Content Area */}
-            <Grid item xs={12} md={8}>
-              <Paper 
-                elevation={3}
-                sx={{ 
-                  bgcolor: 'rgba(20, 20, 58, 0.6)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  minHeight: '400px'
-                }}
-              >
-                {isLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-                    <CircularProgress sx={{ color: '#8b5cf6' }} />
-                  </Box>
-                ) : (
-                  <>
-                    {/* Profile Info Tab Panel */}
-                    <TabPanel value={tabValue} index={0}>
-                      <Typography variant="h5" color="white" fontWeight="bold" sx={{ mb: 3 }}>
-                        Profile Information
-                      </Typography>
-                      
-                      <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                          <Box sx={{ bgcolor: 'rgba(124, 58, 237, 0.1)', p: 2, borderRadius: 2 }}>
-                            <Typography color="white" fontWeight="bold">Name</Typography>
-                            <Typography color="rgba(255,255,255,0.7)">
-                              {userData.displayName}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        
-                        <Grid item xs={12}>
-                          <Box sx={{ bgcolor: 'rgba(124, 58, 237, 0.1)', p: 2, borderRadius: 2 }}>
-                            <Typography color="white" fontWeight="bold">Email</Typography>
-                            <Typography color="rgba(255,255,255,0.7)">
-                              {userData.email}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        
-                        <Grid item xs={12}>
-                          <Box sx={{ bgcolor: 'rgba(124, 58, 237, 0.1)', p: 2, borderRadius: 2 }}>
-                            <Typography color="white" fontWeight="bold">Account Status</Typography>
-                            <Typography color={userData.emailVerified ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'}>
-                              {userData.emailVerified ? 'Verified' : 'Not verified'}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </TabPanel>
-                    
-                    {/* My Plans Tab Panel */}
-                    <TabPanel value={tabValue} index={1}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography variant="h5" color="white" fontWeight="bold">
-                          My Saved Plans
-                        </Typography>
-                      </Box>
-                      
-                      {isPlansLoading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
-                          <CircularProgress size={40} sx={{ color: 'rgba(139, 92, 246, 0.7)' }} />
-                        </Box>
-                      ) : savedPlans.length > 0 ? (
-                        <Grid container spacing={3}>
-                          {savedPlans.map((plan, index) => (
-                            <Grid item xs={12} sm={6} key={plan.id || index}>
-                              <Card 
-                      sx={{ 
-                                  backgroundColor: 'rgba(20, 20, 58, 0.9)',
-                                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                                  borderRadius: 2,
-                                  height: '100%',
-                                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                        '&:hover': {
-                                    transform: 'translateY(-4px)',
-                                    boxShadow: '0 8px 20px rgba(139, 92, 246, 0.2)'
-                                  }
-                                }}
-                              >
-                                <CardActionArea 
-                                  component={Link} 
-                                  href={plan.path}
-                                  sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
-                                >
-                                  <CardContent sx={{ width: '100%' }}>
-                                    <Typography variant="h6" color="white" fontWeight="bold" sx={{ mb: 1 }}>
-                                      {plan.title}
-                                    </Typography>
-                                    
-                                    <Typography color="rgba(255,255,255,0.7)" variant="body2" sx={{ mb: 2 }}>
-                                      {plan.description}
-                                    </Typography>
-                                    
-                                    <Typography color="rgba(255,255,255,0.5)" variant="caption">
-                                      Created: {plan.date || formatDate(plan.createdAt)}
-                                    </Typography>
-                                  </CardContent>
-                                </CardActionArea>
-                              </Card>
-                            </Grid>
-                          ))}
-                        </Grid>
-                      ) : (
-                        <Box 
-                      sx={{ 
-                            textAlign: 'center', 
-                            py: 6,
-                        px: 3,
-                            bgcolor: 'rgba(124, 58, 237, 0.05)',
-                            borderRadius: 2,
-                            border: '1px dashed rgba(139, 92, 246, 0.3)'
-                          }}
-                        >
-                          <Typography color="rgba(255,255,255,0.7)" sx={{ mb: 2 }}>
-                            You don't have any saved plans yet.
-                          </Typography>
-                    <Button 
-                            onClick={() => router.push('/#modes')}
-                      variant="outlined"
-                            startIcon={<AddIcon />}
-                      sx={{ 
-                        borderColor: 'rgba(139, 92, 246, 0.5)',
-                        color: 'rgba(255,255,255,0.9)',
-                        '&:hover': {
-                          borderColor: '#8b5cf6',
-                                backgroundColor: 'rgba(139, 92, 246, 0.1)'
-                        }
-                      }}
-                    >
-                            Explore Coaching Modes
-                    </Button>
-                        </Box>
-                      )}
-                    </TabPanel>
-                  </>
-                )}
-          </Paper>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-    </Container>
+                </TabsContent>
+              </Tabs>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,35 +1,30 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { savePlanToUserProfile } from '@/lib/firebase/userService';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import CheckIcon from '@mui/icons-material/Check';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import TrackChangesIcon from '@mui/icons-material/TrackChanges';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import SaveIcon from '@mui/icons-material/Save';
+import {
+  ChevronDown,
+  ChevronUp,
+  Check,
+  CalendarDays,
+  Dumbbell,
+  Target,
+  TriangleAlert,
+  Save,
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import dynamic from 'next/dynamic';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-
-// Load heavy libraries dynamically
-const jsPDF = dynamic(() => import('jspdf').then(mod => mod.default), {
-  ssr: false,
-  loading: () => null,
-});
-
-const html2canvas = dynamic(() => import('html2canvas').then(mod => mod.default), {
-  ssr: false,
-  loading: () => null,
-});
 
 interface Exercise {
   name: string;
@@ -95,7 +90,7 @@ export default function FitnessPlanPage() {
   const { toast } = useToast();
 
   // Add this function to ensure weekly routine data integrity
-  const ensureValidWeeklyRoutine = (plan) => {
+  const ensureValidWeeklyRoutine = (plan: any) => {
     if (!plan) return plan;
 
     // Validate and ensure health_summary exists with all required properties
@@ -149,7 +144,7 @@ export default function FitnessPlanPage() {
       // Handle meal/meals inconsistency
       if (!plan.diet.meals) {
         if (plan.diet.meal && Array.isArray(plan.diet.meal)) {
-          plan.diet.meals = plan.diet.meal.map(meal => {
+          plan.diet.meals = plan.diet.meal.map((meal: any) => {
             // Ensure each meal has the required properties
             return {
               name: meal.name || "Untitled Meal",
@@ -184,12 +179,12 @@ export default function FitnessPlanPage() {
     // Fix inconsistencies in workouts structure
     if (!plan.workouts) {
       if (plan.workout && Array.isArray(plan.workout)) {
-        plan.workouts = plan.workout.map(w => {
+        plan.workouts = plan.workout.map((w: any) => {
           return {
             name: w.name || "Untitled Workout",
             description: w.description || "General workout",
             duration: w.duration || "30-60 mins",
-            exercises: Array.isArray(w.exercise) ? w.exercise.map(ex => {
+            exercises: Array.isArray(w.exercise) ? w.exercise.map((ex: any) => {
               return {
                 name: ex.name || "Exercise",
                 sets: parseInt(ex.set) || ex.sets || 3,
@@ -414,21 +409,21 @@ export default function FitnessPlanPage() {
 
   const downloadAsPDF = async () => {
     if (!contentRef.current) return;
-    
+
     try {
       setIsGeneratingPDF(true);
       const element = contentRef.current;
-      
+
       // Scroll to top to ensure everything is visible
       window.scrollTo(0, 0);
-      
+
       // Dynamically load required libraries only when needed
       const Html2Canvas = await import('html2canvas').then(mod => mod.default);
       const JsPDF = await import('jspdf').then(mod => mod.default);
-      
+
       // Create a new jsPDF instance
       const pdf = new JsPDF('p', 'mm', 'a4');
-      
+
       // Convert HTML to canvas with optimized settings
       const canvas = await Html2Canvas(element, {
         scale: 1.5, // Reduced scale for better performance
@@ -444,20 +439,20 @@ export default function FitnessPlanPage() {
           return clonedDoc;
         }
       });
-      
+
       // Get canvas dimensions
       const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG with high quality
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 295; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       let heightLeft = imgHeight;
       let position = 0;
-      
+
       // Add first page
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-      
+
       // Add additional pages if needed
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
@@ -465,7 +460,7 @@ export default function FitnessPlanPage() {
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
-      
+
       // Save the PDF
       pdf.save('FitnessPlan.pdf');
     } catch (error) {
@@ -476,66 +471,61 @@ export default function FitnessPlanPage() {
     }
   };
 
-  // Add this function to the component
   // This optimizes the rendering of workout lists
   const renderWorkoutsList = useCallback(() => {
     if (!plan?.workouts || !Array.isArray(plan.workouts) || plan.workouts.length === 0) {
       return (
         <div className="p-4 text-center">
-          <p className="text-violet-300">No workout data available.</p>
+          <p className="text-text-muted">No workout data available.</p>
         </div>
       );
     }
-    
+
     return plan.workouts.map((workout, index) => (
-      <div 
-        key={`workout-${index}`} 
-        className="border border-violet-500/30 rounded-lg p-4 mb-4 bg-violet-950/20"
+      <div
+        key={`workout-${index}`}
+        className="mb-4 rounded-md border border-border bg-surface-sunken p-4"
       >
-        <div 
-          className="flex justify-between items-center cursor-pointer" 
+        <div
+          className="flex cursor-pointer items-center justify-between"
           onClick={() => toggleWorkout(index)}
         >
           <div>
-            <h3 className="text-lg font-semibold text-violet-300">{workout.name || "Untitled Workout"}</h3>
-            <p className="text-sm text-violet-300/70">{workout.description || "No description available"}</p>
-            <div className="text-xs text-violet-400/60 mt-1">Duration: {workout.duration || "Unknown"}</div>
+            <h3 className="text-lg font-semibold text-foreground">{workout.name || "Untitled Workout"}</h3>
+            <p className="text-sm text-text-body">{workout.description || "No description available"}</p>
+            <div className="mt-1 font-mono text-xs uppercase tracking-wide text-text-muted">
+              Duration: {workout.duration || "Unknown"}
+            </div>
           </div>
-          <div className="text-violet-400">
-            {activeWorkout === index ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          <div className="text-text-muted">
+            {activeWorkout === index ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
           </div>
         </div>
-        
+
         {activeWorkout === index && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="mt-4 border-t border-violet-500/20 pt-4"
-          >
-            <h4 className="text-sm font-medium text-violet-200 mb-2">Exercises:</h4>
+          <div className="mt-4 border-t border-border pt-4">
+            <h4 className="mb-2 text-sm font-medium text-foreground">Exercises</h4>
             <div className="space-y-3">
               {workout.exercises && Array.isArray(workout.exercises) && workout.exercises.length > 0 ? (
                 workout.exercises.map((exercise, exIndex) => (
-                <div key={`ex-${index}-${exIndex}`} className="bg-violet-900/20 p-3 rounded-md">
-                    <h5 className="font-medium text-violet-100">{exercise.name || "Untitled Exercise"}</h5>
-                  <div className="mt-1 grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-violet-300/80">Sets: {exercise.sets || "N/A"}</div>
-                      <div className="text-violet-300/80">Reps: {exercise.reps || "N/A"}</div>
-                  </div>
-                  {exercise.notes && (
-                    <div className="mt-2 text-sm text-violet-300/70">
-                      <span className="font-medium">Notes:</span> {exercise.notes}
+                  <div key={`ex-${index}-${exIndex}`} className="rounded-md border border-border bg-surface p-3">
+                    <h5 className="font-medium text-foreground">{exercise.name || "Untitled Exercise"}</h5>
+                    <div className="mt-1 grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-text-body">Sets: {exercise.sets || "N/A"}</div>
+                      <div className="text-text-body">Reps: {exercise.reps || "N/A"}</div>
                     </div>
-                  )}
-                </div>
+                    {exercise.notes && (
+                      <div className="mt-2 text-sm text-text-muted">
+                        <span className="font-medium">Notes:</span> {exercise.notes}
+                      </div>
+                    )}
+                  </div>
                 ))
               ) : (
-                <p className="text-sm text-violet-300/70">No exercises found for this workout.</p>
+                <p className="text-sm text-text-muted">No exercises found for this workout.</p>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     ));
@@ -544,16 +534,13 @@ export default function FitnessPlanPage() {
   // When there's an error or loading
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-background/80 py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-violet-300 mb-6">
+      <div className="min-h-screen bg-background px-4 py-16">
+        <div className="mx-auto max-w-app text-center">
+          <h1 className="mb-6 font-serif text-2xl font-semibold text-foreground md:text-3xl">
             {error}
           </h1>
-          <Button 
-            onClick={() => router.push('/fitness/form')}
-            className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
-          >
-            Go to Fitness Form
+          <Button onClick={() => router.push('/fitness/form')} variant="primary">
+            Go to fitness form
           </Button>
         </div>
       </div>
@@ -562,10 +549,10 @@ export default function FitnessPlanPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-background/80 py-12 px-4 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-violet-300">Loading your fitness plan...</p>
+          <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-primary/25 border-t-primary" />
+          <p className="text-text-muted">Loading your fitness plan…</p>
         </div>
       </div>
     );
@@ -575,67 +562,60 @@ export default function FitnessPlanPage() {
     return null;
   }
 
+  const tabTriggerClass =
+    "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs";
+
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-b from-background to-background/80 py-12 px-4"
-    >
-      <div className="max-w-4xl mx-auto" ref={contentRef}>
+    <div className="min-h-screen bg-background px-4 py-12">
+      <div className="mx-auto max-w-app" ref={contentRef}>
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-purple-600">
-            Your Personalized Fitness Plan
+        <div className="mb-8 text-center">
+          <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">
+            Your plan
+          </span>
+          <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.015em] text-foreground md:text-4xl">
+            Your personalized fitness plan
           </h1>
-          <p className="text-violet-300/80 mt-2 max-w-2xl mx-auto">
-            Based on your profile, we've created a customized plan to help you achieve your fitness goals.
+          <p className="mx-auto mt-2 max-w-xl text-text-muted">
+            Based on your profile, we&apos;ve built a plan to help you reach your fitness goals.
           </p>
         </div>
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-4 mb-8">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="workouts" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-              Workouts
-            </TabsTrigger>
-            <TabsTrigger value="nutrition" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-              Nutrition
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-              Schedule
-            </TabsTrigger>
+          <TabsList className="mb-8 grid grid-cols-2 sm:grid-cols-4">
+            <TabsTrigger value="overview" className={tabTriggerClass}>Overview</TabsTrigger>
+            <TabsTrigger value="workouts" className={tabTriggerClass}>Workouts</TabsTrigger>
+            <TabsTrigger value="nutrition" className={tabTriggerClass}>Nutrition</TabsTrigger>
+            <TabsTrigger value="schedule" className={tabTriggerClass}>Schedule</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Health Summary Card - New addition */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Health Summary Card */}
               {plan.health_summary && (
-                <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden md:col-span-2 mb-6">
-                  <CardHeader className="pb-2">
+                <Card className="md:col-span-2">
+                  <CardHeader>
                     <div className="flex items-center gap-2">
-                      <TrackChangesIcon className="text-violet-500" sx={{ fontSize: 20 }} />
-                      <CardTitle className="text-xl text-violet-300">Your Health Profile</CardTitle>
+                      <Target className="size-5 text-primary" />
+                      <CardTitle>Your health profile</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
                     {plan.health_summary.overview && (
-                      <p className="text-slate-300 mb-4">{plan.health_summary.overview}</p>
+                      <p className="mb-4 text-text-body">{plan.health_summary.overview}</p>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
                       {plan.health_summary.recommendations && plan.health_summary.recommendations.length > 0 && (
                         <div>
-                          <h3 className="text-violet-400 font-medium mb-2">Recommendations</h3>
+                          <h3 className="mb-2 font-medium text-foreground">Recommendations</h3>
                           <ul className="space-y-2">
                             {plan.health_summary.recommendations.map((rec, index) => (
                               <li key={index} className="flex items-start">
-                                <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                                <span className="text-sm text-slate-300">{rec}</span>
+                                <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
+                                <span className="text-sm text-text-body">{rec}</span>
                               </li>
                             ))}
                           </ul>
@@ -644,12 +624,12 @@ export default function FitnessPlanPage() {
 
                       {plan.health_summary.cautions && plan.health_summary.cautions.length > 0 && (
                         <div>
-                          <h3 className="text-violet-400 font-medium mb-2">Cautions</h3>
+                          <h3 className="mb-2 font-medium text-foreground">Cautions</h3>
                           <ul className="space-y-2">
                             {plan.health_summary.cautions.map((caution, index) => (
                               <li key={index} className="flex items-start">
-                                <ErrorOutlineIcon className="text-amber-500 mt-1 mr-2 flex-shrink-0" />
-                                <span className="text-sm text-slate-300">{caution}</span>
+                                <TriangleAlert className="mr-2 mt-0.5 size-4 flex-shrink-0 text-warning" />
+                                <span className="text-sm text-text-body">{caution}</span>
                               </li>
                             ))}
                           </ul>
@@ -661,32 +641,32 @@ export default function FitnessPlanPage() {
               )}
 
               {/* Goals Card */}
-              <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden">
-                <CardHeader className="pb-2">
+              <Card>
+                <CardHeader>
                   <div className="flex items-center gap-2">
-                    <FitnessCenterIcon className="text-violet-500" sx={{ fontSize: 20 }} />
-                    <CardTitle className="text-xl text-violet-300">Your Goals</CardTitle>
+                    <Dumbbell className="size-5 text-primary" />
+                    <CardTitle>Your goals</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    <h3 className="text-violet-400 font-medium mb-2">Short-term Goals</h3>
+                    <h3 className="mb-2 font-medium text-foreground">Short-term goals</h3>
                     <ul className="space-y-2">
                       {plan.goals?.short_term?.map((goal, index) => (
                         <li key={index} className="flex items-start">
-                          <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                          <span className="text-sm text-slate-300">{goal}</span>
+                          <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
+                          <span className="text-sm text-text-body">{goal}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h3 className="text-violet-400 font-medium mb-2">Long-term Goals</h3>
+                    <h3 className="mb-2 font-medium text-foreground">Long-term goals</h3>
                     <ul className="space-y-2">
                       {plan.goals?.long_term?.map((goal, index) => (
                         <li key={index} className="flex items-start">
-                          <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                          <span className="text-sm text-slate-300">{goal}</span>
+                          <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
+                          <span className="text-sm text-text-body">{goal}</span>
                         </li>
                       ))}
                     </ul>
@@ -695,19 +675,19 @@ export default function FitnessPlanPage() {
               </Card>
 
               {/* Metrics Card */}
-              <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden">
-                <CardHeader className="pb-2">
+              <Card>
+                <CardHeader>
                   <div className="flex items-center gap-2">
-                    <FitnessCenterIcon className="text-violet-500" sx={{ fontSize: 20 }} />
-                    <CardTitle className="text-xl text-violet-300">Tracking Metrics</CardTitle>
+                    <Target className="size-5 text-primary" />
+                    <CardTitle>Tracking metrics</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {Object.entries(plan.goals?.metrics || {}).map(([key, value], index) => (
-                      <div key={index} className="p-3 rounded-lg bg-violet-900/20 border border-violet-800/30">
-                        <h3 className="text-violet-400 font-medium mb-1 capitalize">{key.replace(/_/g, ' ')}</h3>
-                        <p className="text-sm text-slate-300">{value}</p>
+                      <div key={index} className="rounded-md border border-border bg-surface-sunken p-3">
+                        <h3 className="mb-1 font-medium capitalize text-foreground">{key.replace(/_/g, ' ')}</h3>
+                        <p className="text-sm text-text-body">{value}</p>
                       </div>
                     ))}
                   </div>
@@ -715,19 +695,19 @@ export default function FitnessPlanPage() {
               </Card>
 
               {/* Recommendations Card */}
-              <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden md:col-span-2">
-                <CardHeader className="pb-2">
+              <Card className="md:col-span-2">
+                <CardHeader>
                   <div className="flex items-center gap-2">
-                    <ErrorOutlineIcon className="text-violet-500" sx={{ fontSize: 20 }} />
-                    <CardTitle className="text-xl text-violet-300">Recommendations</CardTitle>
+                    <Check className="size-5 text-primary" />
+                    <CardTitle>Recommendations</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
                     {plan.diet.recommendations && plan.diet.recommendations.map((recommendation, index) => (
                       <li key={index} className="flex items-start">
-                        <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                        <span className="text-sm text-slate-300">{recommendation}</span>
+                        <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
+                        <span className="text-sm text-text-body">{recommendation}</span>
                       </li>
                     ))}
                   </ul>
@@ -738,43 +718,39 @@ export default function FitnessPlanPage() {
 
           {/* Workouts Tab */}
           <TabsContent value="workouts">
-            <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-xl text-violet-300">Your Workout Plan</CardTitle>
+                <CardTitle>Your workout plan</CardTitle>
                 <CardDescription>
-                  A series of workouts designed to help you reach your fitness goals
+                  A series of workouts designed to help you reach your fitness goals.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {renderWorkoutsList()}
-                </div>
+                <div className="space-y-4">{renderWorkoutsList()}</div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Nutrition Tab */}
           <TabsContent value="nutrition">
-            <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-xl text-violet-300">Nutrition Plan</CardTitle>
-                <CardDescription>
-                  Recommended meals and dietary guidelines
-                </CardDescription>
+                <CardTitle>Nutrition plan</CardTitle>
+                <CardDescription>Recommended meals and dietary guidelines.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   {/* Meals */}
                   <div>
-                    <h3 className="text-lg text-violet-400 mb-3">Recommended Meals</h3>
+                    <h3 className="mb-3 text-base font-semibold text-foreground">Recommended meals</h3>
                     <div className="space-y-3">
                       {plan.diet?.meals?.map((meal, index) => (
-                        <div key={index} className="p-3 rounded-lg bg-violet-900/20 border border-violet-800/30">
-                          <div className="flex justify-between items-start mb-1">
-                            <h4 className="font-medium text-violet-300">{meal.name}</h4>
-                            <span className="text-xs px-2 py-1 rounded bg-violet-800/50 text-violet-300">{meal.time}</span>
+                        <div key={index} className="rounded-md border border-border bg-surface-sunken p-3">
+                          <div className="mb-1 flex items-start justify-between gap-3">
+                            <h4 className="font-medium text-foreground">{meal.name}</h4>
+                            <Badge tone="primary">{meal.time}</Badge>
                           </div>
-                          <p className="text-sm text-slate-300">{meal.description}</p>
+                          <p className="text-sm text-text-body">{meal.description}</p>
                         </div>
                       ))}
                     </div>
@@ -782,12 +758,12 @@ export default function FitnessPlanPage() {
 
                   {/* Dietary Recommendations */}
                   <div>
-                    <h3 className="text-lg text-violet-400 mb-3">Dietary Recommendations</h3>
+                    <h3 className="mb-3 text-base font-semibold text-foreground">Dietary recommendations</h3>
                     <ul className="space-y-2">
                       {plan.diet?.recommendations?.map((rec, index) => (
                         <li key={index} className="flex items-start">
-                          <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                          <span className="text-sm text-slate-300">{rec}</span>
+                          <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
+                          <span className="text-sm text-text-body">{rec}</span>
                         </li>
                       ))}
                     </ul>
@@ -796,12 +772,12 @@ export default function FitnessPlanPage() {
                   {/* Restrictions */}
                   {plan.diet?.restrictions && plan.diet.restrictions.length > 0 && (
                     <div>
-                      <h3 className="text-lg text-violet-400 mb-3">Dietary Restrictions</h3>
+                      <h3 className="mb-3 text-base font-semibold text-foreground">Dietary restrictions</h3>
                       <ul className="space-y-2">
                         {plan.diet.restrictions.map((restriction, index) => (
                           <li key={index} className="flex items-start">
-                            <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
-                            <span className="text-sm text-slate-300">{restriction}</span>
+                            <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
+                            <span className="text-sm text-text-body">{restriction}</span>
                           </li>
                         ))}
                       </ul>
@@ -814,49 +790,47 @@ export default function FitnessPlanPage() {
 
           {/* Schedule Tab */}
           <TabsContent value="schedule">
-            <Card className="border border-violet-500/20 shadow-lg bg-background/50 backdrop-blur-sm overflow-hidden">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-xl text-violet-300">Weekly Schedule</CardTitle>
-                <CardDescription>
-                  Your day-by-day fitness and nutrition plan
-                </CardDescription>
+                <CardTitle>Weekly schedule</CardTitle>
+                <CardDescription>Your day-by-day fitness and nutrition plan.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {Object.entries(plan.weekly_routine || {}).map(([day, routine], index) => (
-                    <div key={index} className="border border-violet-800/30 rounded-lg overflow-hidden">
-                      <div className="p-3 bg-violet-900/20 flex items-center gap-3">
-                        <CalendarTodayIcon className="text-violet-500" sx={{ fontSize: 20 }} />
-                        <h3 className="font-medium text-violet-300 capitalize">{day}</h3>
+                    <div key={index} className="overflow-hidden rounded-md border border-border">
+                      <div className="flex items-center gap-3 bg-surface-sunken p-3">
+                        <CalendarDays className="size-5 text-primary" />
+                        <h3 className="font-medium capitalize text-foreground">{day}</h3>
                       </div>
-                      <div className="p-4 space-y-4">
+                      <div className="space-y-4 p-4">
                         {/* Workouts */}
                         <div>
-                          <h4 className="text-sm font-medium text-violet-400 mb-2">Workouts</h4>
+                          <h4 className="mb-2 text-sm font-medium text-foreground">Workouts</h4>
                           {routine && routine.workouts && Array.isArray(routine.workouts) && routine.workouts.length > 0 ? (
                             <ul className="space-y-1">
                               {routine.workouts.map((workout, wIndex) => (
-                                <li key={wIndex} className="text-sm text-slate-300 flex items-start">
-                                  <CheckIcon className="text-green-500 mt-1 mr-2 flex-shrink-0" />
+                                <li key={wIndex} className="flex items-start text-sm text-text-body">
+                                  <Check className="mr-2 mt-0.5 size-4 flex-shrink-0 text-success" />
                                   {workout}
                                 </li>
                               ))}
                             </ul>
                           ) : (
-                            <p className="text-sm text-slate-400">Rest day - no workouts scheduled</p>
+                            <p className="text-sm text-text-muted">Rest day — no workouts scheduled.</p>
                           )}
                         </div>
-                        
+
                         {/* Nutrition */}
                         <div>
-                          <h4 className="text-sm font-medium text-violet-400 mb-2">Nutrition</h4>
-                          <p className="text-sm text-slate-300">{routine?.nutrition || "Balanced nutrition recommended"}</p>
+                          <h4 className="mb-2 text-sm font-medium text-foreground">Nutrition</h4>
+                          <p className="text-sm text-text-body">{routine?.nutrition || "Balanced nutrition recommended"}</p>
                         </div>
-                        
+
                         {/* Recovery */}
                         <div>
-                          <h4 className="text-sm font-medium text-violet-400 mb-2">Recovery</h4>
-                          <p className="text-sm text-slate-300">{routine?.recovery || "Adequate rest and hydration"}</p>
+                          <h4 className="mb-2 text-sm font-medium text-foreground">Recovery</h4>
+                          <p className="text-sm text-text-body">{routine?.recovery || "Adequate rest and hydration"}</p>
                         </div>
                       </div>
                     </div>
@@ -867,38 +841,33 @@ export default function FitnessPlanPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Back to Form Button */}
-        <div className="mt-8 text-center">
-          <Button 
-            onClick={() => router.push('/fitness/form')}
-            variant="outline"
-            className="border-violet-500/30 hover:bg-violet-500/10 hover:border-violet-500/50 mr-4"
-          >
-            Back to Fitness Form
+        {/* Actions */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button onClick={() => router.push('/fitness/form')} variant="outline">
+            Back to fitness form
           </Button>
-          
-          <Button 
-            onClick={downloadAsPDF}
-            className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 mr-4"
-            disabled={isGeneratingPDF}
-          >
-            {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+
+          <Button onClick={downloadAsPDF} variant="secondary" disabled={isGeneratingPDF}>
+            {isGeneratingPDF ? 'Generating…' : 'Download PDF'}
           </Button>
 
           <Button
             onClick={handleSaveToProfile}
-            className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+            variant="primary"
             disabled={isSavingToFirebase || savedToFirebase}
           >
-            {isSavingToFirebase ? 'Saving...' : savedToFirebase ? 'Saved to Profile' : (
-              <span className="flex items-center gap-1">
-                <SaveIcon fontSize="small" /> Save to Profile
-              </span>
+            {isSavingToFirebase ? (
+              'Saving…'
+            ) : savedToFirebase ? (
+              'Saved to profile'
+            ) : (
+              <>
+                <Save className="size-4" /> Save to profile
+              </>
             )}
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-} 
- 
+}

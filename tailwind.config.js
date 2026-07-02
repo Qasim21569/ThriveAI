@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const withAlpha = (v) => `rgb(var(${v}) / <alpha-value>)`;
+
 module.exports = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
@@ -6,53 +8,138 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"IBM Plex Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['"Source Serif 4"', 'Georgia', '"Times New Roman"', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', '"SFMono-Regular"', 'monospace'],
+        display: ['"Source Serif 4"', 'Georgia', 'serif'],
+      },
       colors: {
-        border: "rgb(var(--border) / <alpha-value>)",
-        input: "rgb(var(--input) / <alpha-value>)",
-        background: "rgb(var(--background) / <alpha-value>)",
-        foreground: "rgb(var(--foreground) / <alpha-value>)",
+        /* --- shadcn semantic tokens --- */
+        border: withAlpha('--border'),
+        'border-strong': withAlpha('--border-strong'),
+        input: withAlpha('--input'),
+        ring: withAlpha('--ring'),
+        background: withAlpha('--background'),
+        foreground: withAlpha('--foreground'),
+        surface: {
+          DEFAULT: withAlpha('--surface'),
+          raised: withAlpha('--surface-raised'),
+          sunken: withAlpha('--surface-sunken'),
+        },
         primary: {
-          DEFAULT: "rgb(var(--primary) / <alpha-value>)",
-          foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
+          DEFAULT: withAlpha('--primary'),
+          foreground: withAlpha('--primary-foreground'),
+          hover: withAlpha('--primary-hover'),
+          active: withAlpha('--primary-active'),
+          soft: withAlpha('--primary-soft'),
         },
         secondary: {
-          DEFAULT: "rgb(var(--secondary) / <alpha-value>)",
-          foreground: "rgb(var(--secondary-foreground) / <alpha-value>)",
-        },
-        destructive: {
-          DEFAULT: "rgb(var(--destructive) / <alpha-value>)",
-          foreground: "rgb(var(--destructive-foreground) / <alpha-value>)",
-        },
-        muted: {
-          DEFAULT: "rgb(var(--muted) / <alpha-value>)",
-          foreground: "rgb(var(--muted-foreground) / <alpha-value>)",
+          DEFAULT: withAlpha('--secondary'),
+          foreground: withAlpha('--secondary-foreground'),
         },
         accent: {
-          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
-          foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
+          DEFAULT: withAlpha('--accent'),
+          foreground: withAlpha('--accent-foreground'),
+          hover: withAlpha('--accent-hover'),
+          soft: withAlpha('--accent-soft'),
+        },
+        muted: {
+          DEFAULT: withAlpha('--muted'),
+          foreground: withAlpha('--muted-foreground'),
+        },
+        destructive: {
+          DEFAULT: withAlpha('--destructive'),
+          foreground: withAlpha('--destructive-foreground'),
+          hover: withAlpha('--destructive-hover'),
+          soft: withAlpha('--destructive-soft'),
+        },
+        success: {
+          DEFAULT: withAlpha('--success'),
+          foreground: withAlpha('--success-foreground'),
+          soft: withAlpha('--success-soft'),
+        },
+        warning: {
+          DEFAULT: withAlpha('--warning'),
+          soft: withAlpha('--warning-soft'),
         },
         popover: {
-          DEFAULT: "rgb(var(--popover) / <alpha-value>)",
-          foreground: "rgb(var(--popover-foreground) / <alpha-value>)",
+          DEFAULT: withAlpha('--popover'),
+          foreground: withAlpha('--popover-foreground'),
         },
         card: {
-          DEFAULT: "rgb(var(--card) / <alpha-value>)",
-          foreground: "rgb(var(--card-foreground) / <alpha-value>)",
+          DEFAULT: withAlpha('--card'),
+          foreground: withAlpha('--card-foreground'),
         },
-      },
-      animation: {
-        'slow-spin': 'slow-spin 20s linear infinite',
-      },
-      keyframes: {
-        'slow-spin': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+        /* Text helpers */
+        'text-body': withAlpha('--text-body'),
+        'text-muted': withAlpha('--text-muted'),
+        /* --- raw warm scales (for fine-grained page work) --- */
+        oat: {
+          50: withAlpha('--oat-50'), 100: withAlpha('--oat-100'), 150: withAlpha('--oat-150'),
+          200: withAlpha('--oat-200'), 300: withAlpha('--oat-300'), 400: withAlpha('--oat-400'),
+          500: withAlpha('--oat-500'),
+        },
+        ink: {
+          400: withAlpha('--ink-400'), 500: withAlpha('--ink-500'),
+          700: withAlpha('--ink-700'), 900: withAlpha('--ink-900'),
+        },
+        coffee: {
+          50: withAlpha('--coffee-50'), 100: withAlpha('--coffee-100'), 300: withAlpha('--coffee-300'),
+          500: withAlpha('--coffee-500'), 600: withAlpha('--coffee-600'), 700: withAlpha('--coffee-700'),
+        },
+        terracotta: {
+          50: withAlpha('--terracotta-50'), 100: withAlpha('--terracotta-100'),
+          400: withAlpha('--terracotta-400'), 500: withAlpha('--terracotta-500'), 600: withAlpha('--terracotta-600'),
+        },
+        sage: { 50: withAlpha('--sage-50'), 500: withAlpha('--sage-500') },
+        amber: { 50: withAlpha('--amber-50'), 500: withAlpha('--amber-500') },
+        clay: { 50: withAlpha('--clay-50'), 500: withAlpha('--clay-500'), 600: withAlpha('--clay-600') },
+        /* Coaching-area hues */
+        mode: {
+          fitness: withAlpha('--mode-fitness'),
+          career: withAlpha('--mode-career'),
+          finance: withAlpha('--mode-finance'),
+          mental: withAlpha('--mode-mental'),
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        none: '0',
+        xs: '4px',
+        sm: '6px',
+        md: '10px',
+        lg: '14px',
+        xl: '20px',
+        '2xl': '24px',
+        full: '999px',
+      },
+      boxShadow: {
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        DEFAULT: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        none: 'none',
+      },
+      maxWidth: {
+        content: '1180px', // marketing
+        app: '940px', // in-app
+      },
+      transitionTimingFunction: {
+        standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        base: '180ms',
+      },
+      keyframes: {
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in var(--duration-base) var(--ease-standard) both',
       },
     },
   },

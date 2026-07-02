@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMentalAssessment } from './service';
+import { getAuthedUid } from '@/lib/auth/verifyAuth';
+import { mentalRequestSchema } from '@/lib/validation/api';
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse the request body
-    const formData = await request.json();
-    
-    console.log('Mental Wellbeing Assessment API Request:', JSON.stringify(formData, null, 2));
-    console.log('OPENROUTER_API_KEY available:', !!process.env.OPENROUTER_API_KEY);
-    console.log('OPENROUTER_MODEL:', process.env.OPENROUTER_MODEL || 'default not set');
-    
+    // Reject unauthenticated requests
+    const uid = await getAuthedUid(request);
+    if (!uid) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Parse and validate the request body shape
+    const body = await request.json();
+    const parsed = mentalRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const formData = parsed.data;
+
     // Generate mental assessment
     const assessment = await generateMentalAssessment(formData);
     

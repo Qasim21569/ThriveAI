@@ -1,12 +1,10 @@
-// OpenRouter API integration for the AI Life Coach app
+// Groq API integration for the AI Life Coach app
 
 // Define coaching modes
 export type CoachingMode = 'career' | 'fitness' | 'finance' | 'mental' | 'general';
 
-// Initialize OpenRouter client settings
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-r1:free';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-70b-versatile';
 
 // Define FitnessFormData type
 interface FitnessFormData {
@@ -14,8 +12,8 @@ interface FitnessFormData {
   gender: string;
   height: string;
   weight: string;
-  fitnessLevel: string;
-  fitnessGoals: string | string[];
+  fitnessLevel?: string;
+  fitnessGoals?: string | string[];
   healthConditions?: string;
   dietaryRestrictions?: string;
   availableEquipment?: string;
@@ -75,99 +73,57 @@ interface FitnessPlan {
  */
 export async function generateFitnessPlan(formData: FitnessFormData): Promise<FitnessPlan> {
   try {
-    console.log("Generating fitness plan using OpenRouter...");
-    console.log("Form data:", JSON.stringify(formData, null, 2));
     const prompt = createFitnessPlanPrompt(formData);
-    console.log("Sending prompt to OpenRouter:", prompt);
 
-    // Define our headers and request options for OpenRouter
-    const apiToken = process.env.OPENROUTER_API_KEY?.trim();
-    console.log("API Token available:", !!apiToken);
-    console.log("API Token first 10 chars:", apiToken?.substring(0, 10));
-    const model = process.env.OPENROUTER_MODEL?.trim() || 'deepseek/deepseek-r1:free';
-    console.log("Using model:", model);
+    const apiToken = process.env.GROQ_API_KEY?.trim();
+    const model = process.env.GROQ_MODEL?.trim() || GROQ_MODEL;
 
-    // Verify we're in a valid environment
-    console.log("Environment:", process.env.NODE_ENV);
-    console.log("Site URL:", process.env.NEXT_PUBLIC_SITE_URL);
-
-    // Improved logging around fetch request
     try {
       if (!apiToken) {
-        console.error("No API token found - cannot make OpenRouter request");
-        throw new Error("OpenRouter API key is missing");
+        throw new Error("Groq API key is missing");
       }
 
-      // Format the headers properly for OpenRouter
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`,
-        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://thriveai-three.vercel.app',
-        'X-Title': 'AI Life Coach'
-      };
-      
-      console.log("Using headers:", JSON.stringify({
-        'Content-Type': headers['Content-Type'],
-        'Authorization': 'Bearer [REDACTED]',
-        'HTTP-Referer': headers['HTTP-Referer'],
-        'X-Title': headers['X-Title']
-      }));
-
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch(GROQ_URL, {
         method: 'POST',
-        headers: headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiToken}`,
+        },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-r1:free',
-          messages: [
-            { role: 'user', content: prompt }
-          ],
+          model,
+          messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000,
           temperature: 0.3,
-          route: "fallback",
-          data_privacy: {
-            prompt_training: true,
-            prompt_public: true
-          }
         })
       });
 
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Error response from OpenRouter:", errorText);
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
+        console.error("Groq API error:", response.status, errorText);
+        throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log("OpenRouter response:", JSON.stringify(data, null, 2));
 
-      // Check if the response contains an error
       if (data.error) {
-        console.error("OpenRouter error:", data.error);
-        throw new Error(`OpenRouter error: ${data.error.message || JSON.stringify(data.error)}`);
+        console.error("Groq error:", data.error);
+        throw new Error(`Groq error: ${data.error.message || JSON.stringify(data.error)}`);
       }
 
-      // Check if the response has the expected structure
-      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-        console.error("Unexpected response format:", data);
-        throw new Error("Unexpected response format from OpenRouter");
+      if (!data.choices?.[0]?.message?.content) {
+        console.error("Unexpected Groq response format");
+        throw new Error("Unexpected response format from Groq");
       }
 
       const generatedText = data.choices[0].message.content.trim();
-      
-      // Check if the response was truncated
       const wasResponseTruncated = data.choices[0].finish_reason === 'length';
-      
+
       if (wasResponseTruncated) {
-        console.log("Response was truncated. Attempting to repair JSON...");
+        console.warn("Response was truncated. Attempting to repair JSON...");
       }
-      
+
       try {
-        // First attempt: Try to parse the cleaned text
         const cleanedText = cleanJSONString(generatedText);
-        console.log("Cleaned JSON string:", cleanedText);
         
         try {
           const fitnessPlan = JSON.parse(cleanedText);
@@ -198,7 +154,7 @@ export async function generateFitnessPlan(formData: FitnessFormData): Promise<Fi
         return generateFallbackPlan(formData);
       }
     } catch (error) {
-      console.error("Error in OpenRouter request:", error);
+      console.error("Error in Groq request:", error);
       return generateFallbackPlan(formData);
     }
   } catch (error) {

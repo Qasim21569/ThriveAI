@@ -12,16 +12,6 @@ const nextConfig = {
     optimizePackageImports: ['framer-motion', '@mui/material', '@mui/icons-material'],
   },
   
-  // Ignore TypeScript errors
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // Ignore ESLint errors
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
   // Optimize image loading
   images: {
     remotePatterns: [

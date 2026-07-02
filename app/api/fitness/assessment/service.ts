@@ -258,91 +258,52 @@ JSON structure:
  */
 export async function generateFitnessAssessment(formData: FitnessFormData): Promise<FitnessAssessment> {
   try {
-    console.log("Generating fitness assessment using OpenRouter...");
-    console.log("Form data:", JSON.stringify(formData, null, 2));
     const prompt = createFitnessAssessmentPrompt(formData);
-    console.log("Sending prompt to OpenRouter:", prompt);
 
-    // Define our headers and request options for OpenRouter
-    const apiToken = process.env.OPENROUTER_API_KEY?.trim();
-    console.log("API Token available:", !!apiToken);
-    console.log("API Token first 10 chars:", apiToken?.substring(0, 10));
-    const model = process.env.OPENROUTER_MODEL?.trim() || 'deepseek/deepseek-r1:free';
-    console.log("Using model:", model);
-
-    // Verify we're in a valid environment
-    console.log("Environment:", process.env.NODE_ENV);
-    console.log("Site URL:", process.env.NEXT_PUBLIC_SITE_URL);
+    const apiToken = process.env.GROQ_API_KEY?.trim();
+    const model = process.env.GROQ_MODEL?.trim() || 'llama-3.1-70b-versatile';
 
     try {
       if (!apiToken) {
-        console.error("No API token found - cannot make OpenRouter request");
-        throw new Error("OpenRouter API key is missing");
+        throw new Error("Groq API key is missing");
       }
 
-      // Format the headers properly for OpenRouter
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`,
-        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://thriveai-three.vercel.app',
-        'X-Title': 'AI Life Coach'
-      };
-
-      console.log("Using headers:", JSON.stringify({
-        'Content-Type': headers['Content-Type'],
-        'Authorization': 'Bearer [REDACTED]',
-        'HTTP-Referer': headers['HTTP-Referer'],
-        'X-Title': headers['X-Title']
-      }));
-
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiToken}`,
+        },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-r1:free',
-          messages: [
-            { role: 'user', content: prompt }
-          ],
+          model,
+          messages: [{ role: 'user', content: prompt }],
           max_tokens: 4000,
           temperature: 0.3,
-          route: "fallback",
-          data_privacy: {
-            prompt_training: true,
-            prompt_public: true
-          }
         })
       });
 
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Error response from OpenRouter:", errorText);
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
+        console.error("Groq API error:", response.status, errorText);
+        throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log("OpenRouter response:", JSON.stringify(data, null, 2));
 
-      // Check if the response contains an error
       if (data.error) {
-        console.error("OpenRouter error:", data.error);
-        throw new Error(`OpenRouter error: ${data.error.message || JSON.stringify(data.error)}`);
+        console.error("Groq error:", data.error);
+        throw new Error(`Groq error: ${data.error.message || JSON.stringify(data.error)}`);
       }
 
-      // Check if the response has the expected structure
-      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-        console.error("Unexpected response format:", data);
-        throw new Error("Unexpected response format from OpenRouter");
+      if (!data.choices?.[0]?.message?.content) {
+        console.error("Unexpected Groq response format");
+        throw new Error("Unexpected response format from Groq");
       }
 
       const generatedText = data.choices[0].message.content.trim();
 
       try {
-        // Clean and parse the response
         const cleanedText = cleanJSONString(generatedText);
-        console.log("Cleaned JSON string:", cleanedText);
 
         try {
           const assessment = JSON.parse(cleanedText);
@@ -356,7 +317,7 @@ export async function generateFitnessAssessment(formData: FitnessFormData): Prom
         return generateFallbackAssessment(formData);
       }
     } catch (error) {
-      console.error("Error in OpenRouter request:", error);
+      console.error("Error in Groq request:", error);
       return generateFallbackAssessment(formData);
     }
   } catch (error) {
