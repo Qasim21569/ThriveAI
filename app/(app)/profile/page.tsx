@@ -35,6 +35,7 @@ export default function ProfilePage() {
     creationTime: new Date().toISOString(),
   });
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
 
   const router = useRouter();
 
@@ -92,13 +93,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDelete = async (planId: string, title: string) => {
-    if (!uid) return;
-    if (!window.confirm(`Delete "${title}"? This can't be undone.`)) return;
-    setBusyPlanId(planId);
+  const confirmAndDelete = async () => {
+    if (!uid || !confirmDelete) return;
+    const { id } = confirmDelete;
+    setConfirmDelete(null);
+    setBusyPlanId(id);
     try {
-      await deletePlan(uid, planId);
-      setSavedPlans((prev) => prev.filter((p) => p.id !== planId));
+      await deletePlan(uid, id);
+      setSavedPlans((prev) => prev.filter((p) => p.id !== id));
       toast.success('Plan deleted');
     } catch (err) {
       console.error('Error deleting plan:', err);
@@ -258,7 +260,7 @@ export default function ProfilePage() {
                             variant="ghost"
                             size="sm"
                             disabled={busyPlanId === plan.id}
-                            onClick={() => handleDelete(plan.id, plan.title)}
+                            onClick={() => setConfirmDelete({ id: plan.id, title: plan.title })}
                             className="text-destructive hover:bg-destructive-soft hover:text-destructive"
                           >
                             <Trash2 className="size-3.5" /> Delete
@@ -280,6 +282,33 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4 animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl border border-border bg-surface p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-serif text-lg font-semibold text-foreground">Delete this plan?</h2>
+            <p className="mt-2 text-sm text-text-muted">
+              &ldquo;{confirmDelete.title}&rdquo; will be permanently deleted. This can&apos;t be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-2.5">
+              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" size="sm" onClick={confirmAndDelete}>
+                <Trash2 className="size-3.5" /> Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
