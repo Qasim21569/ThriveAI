@@ -6,6 +6,7 @@ import { Dumbbell, Briefcase, Wallet, Heart, ChevronRight, type LucideIcon } fro
 import { useAuth } from '@/lib/firebase/authContext';
 import AuthModal from '@/components/auth/AuthModal';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 type Mode = {
   key: string;
@@ -14,6 +15,7 @@ type Mode = {
   desc: string;
   iconClass: string;
   softClass: string;
+  comingSoon?: boolean;
 };
 
 const MODES: Mode[] = [
@@ -26,12 +28,21 @@ const MODES: Mode[] = [
     desc: 'A personalized workout and nutrition plan tailored to your goals, level, and equipment.',
   },
   {
+    key: 'mental',
+    title: 'Mental wellbeing',
+    Icon: Heart,
+    iconClass: 'text-mode-mental',
+    softClass: 'bg-primary-soft',
+    desc: 'Reduce stress and build resilience through guided conversations that adapt to you.',
+  },
+  {
     key: 'career',
     title: 'Career development',
     Icon: Briefcase,
     iconClass: 'text-mode-career',
     softClass: 'bg-coffee-50',
     desc: 'Interview prep, skill-building, and a roadmap to accelerate your professional growth.',
+    comingSoon: true,
   },
   {
     key: 'finance',
@@ -40,14 +51,7 @@ const MODES: Mode[] = [
     iconClass: 'text-mode-finance',
     softClass: 'bg-sage-50',
     desc: 'Budget optimization, saving strategies, and planning tailored to your income and goals.',
-  },
-  {
-    key: 'mental',
-    title: 'Mental wellbeing',
-    Icon: Heart,
-    iconClass: 'text-mode-mental',
-    softClass: 'bg-primary-soft',
-    desc: 'Reduce stress and build resilience through guided conversations that adapt to you.',
+    comingSoon: true,
   },
 ];
 
@@ -98,10 +102,13 @@ export const ModeCards = () => {
                   <m.Icon className="size-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl font-semibold text-foreground">{m.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif text-xl font-semibold text-foreground">{m.title}</h3>
+                    {m.comingSoon && <Badge tone="neutral">Coming soon</Badge>}
+                  </div>
                   <p className="mt-1.5 text-sm leading-relaxed text-text-body">{m.desc}</p>
                   <div className={`mt-3.5 flex items-center gap-1 text-sm font-medium ${m.iconClass}`}>
-                    Get started <ChevronRight className="size-4" />
+                    {m.comingSoon ? 'Get notified' : 'Get started'} <ChevronRight className="size-4" />
                   </div>
                 </div>
               </div>

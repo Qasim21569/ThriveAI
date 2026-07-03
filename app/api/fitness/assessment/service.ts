@@ -20,16 +20,14 @@ interface FitnessFormData {
   // Preferences
   workoutDaysPerWeek: string;
   workoutDuration: string;
-  preferredExercises: string;
-  dislikedExercises: string;
   dietPreference: string; // New field for diet preference
 
-  // Health Considerations
-  injuries: string;
-  healthConditions: string;
-
-  // Additional Information
-  additionalInfo: string;
+  // Free-text fields — optional, form allows them blank
+  preferredExercises?: string;
+  dislikedExercises?: string;
+  injuries?: string;
+  healthConditions?: string;
+  additionalInfo?: string;
 }
 
 interface FitnessAssessment {
@@ -563,11 +561,11 @@ function generateFallbackAssessment(formData: FitnessFormData): FitnessAssessmen
   const isMale = formData.gender === 'male';
   const goalType = formData.primaryGoal || 'overall-fitness';
   const experience = formData.experienceLevel || 'beginner';
-  const hasMobility = formData.injuries.toLowerCase().includes('mobility')
-    || formData.injuries.toLowerCase().includes('flexibility');
-  const hasJointIssues = formData.injuries.toLowerCase().includes('joint')
-    || formData.injuries.toLowerCase().includes('knee')
-    || formData.injuries.toLowerCase().includes('back');
+  const injuriesText = (formData.injuries || '').toLowerCase();
+  const hasMobility = injuriesText.includes('mobility') || injuriesText.includes('flexibility');
+  const hasJointIssues = injuriesText.includes('joint')
+    || injuriesText.includes('knee')
+    || injuriesText.includes('back');
   const dietType = formData.dietPreference || 'general';
 
   // Personalize the diet recommendations based on preference

@@ -5,18 +5,49 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
-import { getUserPlans, type PlanSummary } from '@/lib/firebase/plans';
+import { getUserPlans, pickActivePlan, type PlanSummary } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
 import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>> = {
   workout: Dumbbell,
   mood: Smile,
   note: StickyNote,
 };
+
+function DashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-app px-4 py-12">
+      <Skeleton className="mb-2 h-4 w-20" />
+      <Skeleton className="mb-8 h-9 w-64" />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Card className="p-6 md:col-span-2">
+          <Skeleton className="mb-4 h-6 w-40" />
+          <Skeleton className="mb-2 h-5 w-56" />
+          <Skeleton className="mb-4 h-4 w-32" />
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-40" />
+          </div>
+        </Card>
+        <Card className="p-6">
+          <Skeleton className="mb-4 h-6 w-32" />
+          <Skeleton className="mb-4 h-4 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </Card>
+      </div>
+      <Card className="mt-6 p-6">
+        <Skeleton className="mb-4 h-6 w-32" />
+        <Skeleton className="mb-2 h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </Card>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -50,21 +81,12 @@ export default function DashboardPage() {
     return unsub;
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-primary/25 border-t-primary" />
-          <p className="text-text-muted">Loading your dashboard…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
 
-  const activePlan = plans[0] ?? null;
+  const activePlan = pickActivePlan(plans);
 
   return (
-    <div className="min-h-screen bg-background px-4 py-12">
+    <div className="px-4 py-12">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
       <div className="mx-auto max-w-app">

@@ -22,12 +22,14 @@ export const fitnessRequestSchema = z
     experienceLevel: nonEmpty,
     workoutDaysPerWeek: nonEmpty,
     workoutDuration: nonEmpty,
-    preferredExercises: nonEmpty,
-    dislikedExercises: nonEmpty,
     dietPreference: nonEmpty,
-    injuries: nonEmpty,
-    healthConditions: nonEmpty,
-    additionalInfo: nonEmpty,
+    // Free-text fields — genuinely optional, the prompt builder already
+    // falls back to sensible defaults ("None", "Various exercises") when empty.
+    preferredExercises: z.string().optional(),
+    dislikedExercises: z.string().optional(),
+    injuries: z.string().optional(),
+    healthConditions: z.string().optional(),
+    additionalInfo: z.string().optional(),
   })
   .passthrough();
 

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Dumbbell, Smile, StickyNote } from 'lucide-react';
+import { Dumbbell, Smile, StickyNote } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
 import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>> = {
   workout: Dumbbell,
@@ -32,6 +33,65 @@ function formatRelative(iso: string): string {
   const diffDays = Math.round(diffHours / 24);
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/** Simple 7-day-back activity strip: one cell per day, filled if that day has a check-in. */
+function ActivityStrip({ checkins }: { checkins: Checkin[] }) {
+  const days: { label: string; hasActivity: boolean; isToday: boolean }[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(today);
+    day.setDate(day.getDate() - i);
+    const dayEnd = new Date(day);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+
+    const hasActivity = checkins.some((c) => {
+      const created = new Date(c.createdAt);
+      return created >= day && created < dayEnd;
+    });
+
+    days.push({
+      label: day.toLocaleDateString(undefined, { weekday: 'narrow' }),
+      hasActivity,
+      isToday: i === 0,
+    });
+  }
+
+  return (
+    <div className="flex items-end gap-2">
+      {days.map((d, i) => (
+        <div key={i} className="flex flex-col items-center gap-1.5">
+          <div
+            className={[
+              'size-8 rounded-md border transition-colors',
+              d.hasActivity
+                ? 'border-primary bg-primary-soft'
+                : 'border-border bg-surface-sunken',
+              d.isToday ? 'ring-2 ring-accent/40' : '',
+            ].join(' ')}
+          />
+          <span className="font-mono text-[10px] uppercase text-text-muted">{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProgressSkeleton() {
+  return (
+    <div className="mx-auto max-w-app px-4 py-12">
+      <Skeleton className="mb-2 h-4 w-20" />
+      <Skeleton className="mb-8 h-8 w-56" />
+      <div className="mb-6 grid grid-cols-3 gap-4">
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+      </div>
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
 }
 
 export default function ProgressPage() {
@@ -61,37 +121,24 @@ export default function ProgressPage() {
 
   const workoutCount = checkins.filter((c) => c.type === 'workout').length;
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-primary/25 border-t-primary" />
-          <p className="text-text-muted">Loading your progress…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <ProgressSkeleton />;
 
   return (
-    <div className="min-h-screen bg-background px-4 py-12">
+    <div className="px-4 py-12">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
       <div className="mx-auto max-w-app">
-        <div className="mb-6 flex items-center gap-3">
-          <button
-            onClick={() => router.push('/dashboard')}
-            aria-label="Back to dashboard"
-            className="inline-flex size-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </button>
-          <div>
-            <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">Progress</span>
-            <h1 className="font-serif text-2xl font-semibold text-foreground md:text-3xl">
-              Your check-in history
-            </h1>
-          </div>
+        <div className="mb-6">
+          <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">Progress</span>
+          <h1 className="font-serif text-2xl font-semibold text-foreground md:text-3xl">
+            Your check-in history
+          </h1>
         </div>
+
+        <Card className="mb-6 p-4">
+          <div className="mb-3 text-sm font-medium text-foreground">Last 7 days</div>
+          <ActivityStrip checkins={checkins} />
+        </Card>
 
         {checkins.length > 0 && (
           <div className="mb-6 grid grid-cols-3 gap-4">

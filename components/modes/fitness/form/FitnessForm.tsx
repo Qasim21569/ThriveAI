@@ -60,16 +60,14 @@ const formSchema = z.object({
   // Preferences
   workoutDaysPerWeek: z.string().min(1, 'Workout days is required'),
   workoutDuration: z.string().min(1, 'Workout duration is required'),
-  preferredExercises: z.string().min(1, 'Preferred exercises are required'),
-  dislikedExercises: z.string().min(1, 'Disliked exercises are required'),
   dietPreference: z.string().min(1, 'Diet preference is required'),
-
-  // Health Considerations
-  injuries: z.string().min(1, 'Injuries or limitations are required'),
-  healthConditions: z.string().min(1, 'Health conditions are required'),
-
-  // Additional Information
-  additionalInfo: z.string().min(1, 'Additional information is required'),
+  // Free-text fields — optional. Leaving these blank is a normal, valid
+  // submission; the AI prompt already falls back to sensible defaults.
+  preferredExercises: z.string().optional(),
+  dislikedExercises: z.string().optional(),
+  injuries: z.string().optional(),
+  healthConditions: z.string().optional(),
+  additionalInfo: z.string().optional(),
 });
 
 // Type for form stages
@@ -616,7 +614,7 @@ export function FitnessForm() {
                     name="preferredExercises"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preferred exercises / activities</FormLabel>
+                        <FormLabel>Preferred exercises / activities <span className="font-normal text-text-muted">(optional)</span></FormLabel>
                         <FormControl>
                           <Textarea placeholder="E.g., running, weight lifting, yoga, swimming" {...field} className="resize-none" />
                         </FormControl>
@@ -630,7 +628,7 @@ export function FitnessForm() {
                     name="dislikedExercises"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Disliked exercises / activities</FormLabel>
+                        <FormLabel>Disliked exercises / activities <span className="font-normal text-text-muted">(optional)</span></FormLabel>
                         <FormControl>
                           <Textarea placeholder="E.g., running, burpees, high-impact exercises" {...field} className="resize-none" />
                         </FormControl>
@@ -647,7 +645,7 @@ export function FitnessForm() {
                     name="injuries"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current injuries or physical limitations</FormLabel>
+                        <FormLabel>Current injuries or physical limitations <span className="font-normal text-text-muted">(optional)</span></FormLabel>
                         <FormControl>
                           <Textarea placeholder="E.g., knee injury, lower back pain, shoulder mobility issues" {...field} className="resize-none" />
                         </FormControl>
@@ -661,7 +659,7 @@ export function FitnessForm() {
                     name="healthConditions"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Relevant health conditions</FormLabel>
+                        <FormLabel>Relevant health conditions <span className="font-normal text-text-muted">(optional)</span></FormLabel>
                         <FormControl>
                           <Textarea placeholder="E.g., asthma, diabetes, high blood pressure" {...field} className="resize-none" />
                         </FormControl>
@@ -675,7 +673,7 @@ export function FitnessForm() {
                     name="additionalInfo"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Additional information</FormLabel>
+                        <FormLabel>Additional information <span className="font-normal text-text-muted">(optional)</span></FormLabel>
                         <FormControl>
                           <Textarea placeholder="Any other information you'd like to share with your AI coach" {...field} className="resize-none" />
                         </FormControl>

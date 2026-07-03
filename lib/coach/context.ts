@@ -1,4 +1,4 @@
-import { getUserPlans, getPlan } from '@/lib/firebase/plans';
+import { getUserPlans, getPlan, pickActivePlan } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin } from '@/lib/firebase/checkins';
 import { getMemory, saveMemory } from '@/lib/firebase/memory';
 
@@ -132,8 +132,9 @@ export async function buildCoachContext(uid: string, idToken: string): Promise<C
 
   let planBlock = '';
   let hasPlan = false;
-  if (plans[0]) {
-    const fullPlan = await getPlan(uid, plans[0].id);
+  const activePlan = pickActivePlan(plans);
+  if (activePlan) {
+    const fullPlan = await getPlan(uid, activePlan.id);
     if (fullPlan) {
       hasPlan = true;
       planBlock = truncateToBudget(summarizePlanForPrompt(fullPlan.type, fullPlan.data), BUDGET.plan);

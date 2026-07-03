@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { Send, CheckCircle2, RotateCcw } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import type { User } from 'firebase/auth';
 import { saveMessage, getRecentMessages, type ChatMessage } from '@/lib/firebase/messages';
@@ -12,6 +12,15 @@ import { logCheckinArgsSchema, extractToolCall } from '@/lib/coach/tools';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+
+const SUGGESTED_PROMPTS = [
+  'Log today\'s workout',
+  'How have I been doing lately?',
+  'What should I focus on this week?',
+  'Give me some motivation',
+];
+
+const ERROR_TEXT = "Sorry, I couldn't respond just now. Please try again.";
 
 function ChatBubble({ role, content, isAction }: { role: 'user' | 'assistant'; content: string; isAction?: boolean }) {
   const me = role === 'user';
@@ -53,7 +62,9 @@ export default function CoachPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [contextBlock, setContextBlock] = useState<string | undefined>(undefined);
   const [hasPlan, setHasPlan] = useState(false);
+  const [failedRetry, setFailedRetry] = useState<{ userText: string; assistantId: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Load auth, the assembled context pipeline, and recent message history on mount.
   useEffect(() => {
@@ -86,27 +97,15 @@ export default function CoachPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = async () => {
-    const userText = input.trim();
-    if (!userText || isStreaming || !user) return;
+  // Autofocus the input once the page is ready to type into.
+  useEffect(() => {
+    if (!loading) inputRef.current?.focus();
+  }, [loading]);
 
-    setInput('');
-    const priorHistory = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
-
-    const userMsg: ChatMessage = {
-      id: `local-${Date.now()}`,
-      role: 'user',
-      content: userText,
-      createdAt: new Date().toISOString(),
-    };
-    const assistantId = `local-${Date.now()}-a`;
-    setMessages((prev) => [
-      ...prev,
-      userMsg,
-      { id: assistantId, role: 'assistant', content: '', createdAt: new Date().toISOString() },
-    ]);
-    saveMessage(user.uid, 'user', userText).catch((e) => console.error('Failed to save message:', e));
-
+  /** Streams a reply into the given assistant bubble. Does not add a user bubble — callers handle that. */
+  const streamAssistantReply = async (userText: string, assistantId: string, priorHistory: { role: 'user' | 'assistant'; content: string }[]) => {
+    if (!user) return;
+    setFailedRetry(null);
     setIsStreaming(true);
     try {
       const idToken = await user.getIdToken();
@@ -126,9 +125,6 @@ export default function CoachPage() {
         const { done, value } = await reader.read();
         if (done) break;
         rawText += decoder.decode(value, { stream: true });
-        // Strip the marker live so it never flashes on screen mid-stream —
-        // it only ever appears in the last chunk, but this keeps every
-        // intermediate render clean regardless.
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, content: extractToolCall(rawText).text } : m)),
         );
@@ -138,9 +134,6 @@ export default function CoachPage() {
       let finalText = text;
 
       if (toolCall?.name === 'log_checkin') {
-        // Defense in depth: the server already validated this, but we
-        // re-validate here since the payload crossed another boundary
-        // (the HTTP response body) before reaching code that acts on it.
         const parsed = logCheckinArgsSchema.safeParse(toolCall.arguments);
         if (parsed.success) {
           const { type, summary } = parsed.data;
@@ -158,27 +151,53 @@ export default function CoachPage() {
         }
       }
 
-      setMessages((prev) =>
-        prev.map((m) => (m.id === assistantId ? { ...m, content: finalText } : m)),
-      );
+      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: finalText } : m)));
 
       if (finalText) {
-        saveMessage(user.uid, 'assistant', finalText).catch((e) =>
-          console.error('Failed to save message:', e),
-        );
+        saveMessage(user.uid, 'assistant', finalText).catch((e) => console.error('Failed to save message:', e));
       }
     } catch (error) {
       console.error('Coach chat error:', error);
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, content: "Sorry, I couldn't respond just now. Please try again." }
-            : m,
-        ),
-      );
+      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: ERROR_TEXT } : m)));
+      setFailedRetry({ userText, assistantId });
     } finally {
       setIsStreaming(false);
     }
+  };
+
+  const handleSend = async (overrideText?: string) => {
+    const userText = (overrideText ?? input).trim();
+    if (!userText || isStreaming || !user) return;
+
+    setInput('');
+    const priorHistory = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+
+    const userMsg: ChatMessage = {
+      id: `local-${Date.now()}`,
+      role: 'user',
+      content: userText,
+      createdAt: new Date().toISOString(),
+    };
+    const assistantId = `local-${Date.now()}-a`;
+    setMessages((prev) => [
+      ...prev,
+      userMsg,
+      { id: assistantId, role: 'assistant', content: '', createdAt: new Date().toISOString() },
+    ]);
+    saveMessage(user.uid, 'user', userText).catch((e) => console.error('Failed to save message:', e));
+
+    await streamAssistantReply(userText, assistantId, priorHistory);
+  };
+
+  const handleRetry = () => {
+    if (!failedRetry) return;
+    const { userText, assistantId } = failedRetry;
+    const priorHistory = messages
+      .filter((m) => m.id !== assistantId)
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }));
+    setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: '' } : m)));
+    streamAssistantReply(userText, assistantId, priorHistory);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -190,7 +209,7 @@ export default function CoachPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex h-[calc(100vh-61px)] items-center justify-center bg-background">
         <div className="text-center">
           <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-primary/25 border-t-primary" />
           <p className="text-text-muted">Loading your coach…</p>
@@ -200,30 +219,35 @@ export default function CoachPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-[calc(100vh-61px)] flex-col bg-background">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3.5">
-        <button
-          onClick={() => router.push('/dashboard')}
-          aria-label="Back to dashboard"
-          className="inline-flex size-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ArrowLeft className="size-5" />
-        </button>
-        <div>
-          <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Coach</h1>
-          <p className="text-xs text-text-muted">
-            {hasPlan ? 'Knows your active plan and recent check-ins' : 'No plan yet — create one for personalized advice'}
-          </p>
-        </div>
+      <div className="border-b border-border px-4 py-3.5">
+        <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Coach</h1>
+        <p className="text-xs text-text-muted">
+          {hasPlan ? 'Knows your active plan and recent check-ins' : 'No plan yet — create one for personalized advice'}
+        </p>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {messages.length === 0 && (
-            <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center text-sm text-text-muted">
-              Say hello to start your first conversation with your coach.
+            <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
+              <p className="mb-4 text-sm text-text-muted">
+                Say hello, or try one of these to get started:
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSend(prompt)}
+                    disabled={isStreaming}
+                    className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-sm text-text-body transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {messages.map((m) => (
@@ -234,12 +258,20 @@ export default function CoachPage() {
               isAction={m.role === 'assistant' && m.content.includes('✓ Logged')}
             />
           ))}
+          {failedRetry && (
+            <div className="flex justify-start">
+              <Button variant="outline" size="sm" onClick={handleRetry} disabled={isStreaming}>
+                <RotateCcw className="size-3.5" /> Try again
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="border-t border-border px-4 py-3.5">
         <div className="mx-auto flex max-w-2xl items-end gap-2.5">
           <Textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -249,7 +281,7 @@ export default function CoachPage() {
             disabled={isStreaming}
           />
           <Button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             variant="primary"
             size="icon"
             disabled={isStreaming || !input.trim()}

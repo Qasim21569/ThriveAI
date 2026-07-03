@@ -5,9 +5,11 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  deleteDoc,
   query,
   orderBy,
   serverTimestamp,
+  writeBatch,
   Timestamp,
 } from 'firebase/firestore';
 
@@ -34,7 +36,10 @@ function toISOString(value: unknown): string {
 }
 
 /**
- * Save a new plan to users/{uid}/plans/{auto-id}.
+ * Save a new plan to users/{uid}/plans/{auto-id}, marking it the sole
+ * active plan. A newly created plan becoming "the" active plan is the
+ * expected behavior — a stale check-in-time isActive:true left on every
+ * previous plan would make "active" mean nothing.
  * Returns the generated Firestore document ID (used as the plan URL).
  */
 export async function savePlan(
@@ -43,6 +48,8 @@ export async function savePlan(
   title: string,
   data: unknown,
 ): Promise<string> {
+  const existing = await getUserPlans(uid);
+
   const ref = await addDoc(collection(db, 'users', uid, 'plans'), {
     type,
     title,
@@ -50,6 +57,15 @@ export async function savePlan(
     isActive: true,
     createdAt: serverTimestamp(),
   });
+
+  if (existing.length > 0) {
+    const batch = writeBatch(db);
+    for (const p of existing) {
+      batch.update(doc(db, 'users', uid, 'plans', p.id), { isActive: false });
+    }
+    await batch.commit();
+  }
+
   return ref.id;
 }
 
@@ -89,4 +105,31 @@ export async function getUserPlans(uid: string): Promise<PlanSummary[]> {
     createdAt: toISOString(d.data().createdAt),
     isActive: Boolean(d.data().isActive),
   }));
+}
+
+/**
+ * Pick the "active" plan from a list: the one explicitly marked isActive,
+ * falling back to the most recent if none is (covers plans saved before
+ * setActivePlan existed, and the always-newest-first ordering from
+ * getUserPlans already puts the fallback candidate first).
+ */
+export function pickActivePlan(plans: PlanSummary[]): PlanSummary | null {
+  return plans.find((p) => p.isActive) ?? plans[0] ?? null;
+}
+
+/**
+ * Mark one plan active and every other plan for this user inactive.
+ * A single batched write — either all of it applies or none of it does.
+ */
+export async function setActivePlan(uid: string, planId: string, allPlanIds: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  for (const id of allPlanIds) {
+    batch.update(doc(db, 'users', uid, 'plans', id), { isActive: id === planId });
+  }
+  await batch.commit();
+}
+
+/** Permanently delete a plan. */
+export async function deletePlan(uid: string, planId: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'plans', planId));
 }
