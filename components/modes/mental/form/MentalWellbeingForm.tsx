@@ -23,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { FormProgress } from './FormProgress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { auth } from '@/lib/firebase/firebaseConfig';
+import { savePlan } from '@/lib/firebase/plans';
 
 // Shared warm styling for native text controls (matches Input).
 const nativeInputClass =
@@ -260,16 +261,18 @@ export function MentalWellbeingForm() {
       const data = await response.json();
 
       setGenerationStep('saving');
-      localStorage.setItem('mentalAssessment', JSON.stringify(data.assessment));
-
       setGenerationStep('complete');
       toast.success('Your mental wellbeing assessment is ready!');
-
       setShowConfetti(true);
 
-      setTimeout(() => {
-        router.push('/mental/report');
-      }, 1000);
+      if (user) {
+        const planId = await savePlan(user.uid, 'mental', 'Mental Wellbeing Assessment', data.assessment);
+        setTimeout(() => router.push(`/mental/report/${planId}`), 1000);
+      } else {
+        // Not signed in — fall back to localStorage + the non-permanent report page
+        localStorage.setItem('mentalAssessment', JSON.stringify(data.assessment));
+        setTimeout(() => router.push('/mental/report'), 1000);
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Failed to generate your assessment. Please try again.');

@@ -28,7 +28,7 @@ export default function SignUpPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user && !success) {
-        router.push('/');
+        router.push('/dashboard');
       }
     });
 
@@ -73,11 +73,13 @@ export default function SignUpPage() {
         updatedAt: new Date().toISOString(),
       });
 
-      // Show success message and redirect after delay
+      // Account creation signs the user in immediately — no need to bounce
+      // through the sign-in page. Show a brief success flash, then go
+      // straight to the dashboard.
       setSuccess(true);
       setTimeout(() => {
-        router.push('/auth/sign-in');
-      }, 2000);
+        router.push('/dashboard');
+      }, 800);
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
 
@@ -125,7 +127,7 @@ export default function SignUpPage() {
           {success && (
             <Alert tone="success" className="mb-5">
               <AlertDescription>
-                Account created successfully! Redirecting to sign in…
+                Account created successfully! Taking you to your dashboard…
               </AlertDescription>
             </Alert>
           )}

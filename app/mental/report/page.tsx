@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navbar } from '@/components/landing/navbar';
 import { Footer } from '@/components/landing/footer';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { savePlanToUserProfile } from '@/lib/firebase/userService';
 
@@ -62,7 +62,6 @@ export default function MentalWellbeingReportPage() {
   const [isSavingToFirebase, setIsSavingToFirebase] = useState(false);
   const [savedToFirebase, setSavedToFirebase] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string>('');
-  const { toast } = useToast();
 
   // Load assessment from localStorage on component mount
   useEffect(() => {
@@ -177,10 +176,8 @@ export default function MentalWellbeingReportPage() {
 
     const user = auth.currentUser;
     if (!user) {
-      toast({
-        title: 'Sign in required',
+      toast.error('Sign in required', {
         description: 'Please sign in to save this assessment to your profile',
-        variant: 'destructive',
       });
       return;
     }
@@ -192,8 +189,7 @@ export default function MentalWellbeingReportPage() {
 
       if (success) {
         setSavedToFirebase(true);
-        toast({
-          title: 'Assessment saved!',
+        toast.success('Assessment saved!', {
           description: 'Your assessment has been saved to your profile and can be accessed anytime',
         });
       } else {
@@ -201,10 +197,8 @@ export default function MentalWellbeingReportPage() {
       }
     } catch (error) {
       console.error('Error saving assessment:', error);
-      toast({
-        title: 'Failed to save',
+      toast.error('Failed to save', {
         description: 'There was a problem saving your assessment. Please try again later.',
-        variant: 'destructive',
       });
     } finally {
       setIsSavingToFirebase(false);
@@ -213,19 +207,9 @@ export default function MentalWellbeingReportPage() {
 
   const downloadAsPDF = async () => {
     if (!contentRef.current) return;
-    try {
-      toast({
-        title: 'PDF download',
-        description: 'This feature is not yet implemented',
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate PDF. Please try again.',
-        variant: 'destructive',
-      });
-    }
+    toast.info('PDF download', {
+      description: 'This feature is not yet implemented',
+    });
   };
 
   // Map score keywords to warm semantic text colors

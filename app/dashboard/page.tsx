@@ -100,7 +100,7 @@ export default function DashboardPage() {
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <Button asChild variant="outline">
-                      <Link href={`/fitness/plan/${activePlan.id}`}>
+                      <Link href={activePlan.type === 'mental' ? `/mental/report/${activePlan.id}` : `/fitness/plan/${activePlan.id}`}>
                         View full plan <ArrowRight className="size-4" />
                       </Link>
                     </Button>

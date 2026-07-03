@@ -23,7 +23,7 @@ export default function SignInPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        router.push('/');
+        router.push('/dashboard');
       }
     });
 
@@ -37,7 +37,7 @@ export default function SignInPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error: any) {
       let errorMessage = 'Failed to sign in';
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/firebase/authContext';
 
 const STATS: [string, string][] = [
   ['4-in-1', 'coaching areas'],
@@ -28,6 +29,8 @@ function Bubble({ who, children }: { who: 'coach' | 'me'; children: React.ReactN
 }
 
 export const HeroSection = () => {
+  const { user } = useAuth();
+
   return (
     <section id="hero" className="mx-auto max-w-content px-6 pb-16 pt-16 md:pt-20">
       <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
@@ -45,11 +48,19 @@ export const HeroSection = () => {
             wellbeing — all in one calm, private place.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="primary" size="lg">
-              <Link href="/auth/sign-up">
-                Start coaching <ArrowRight className="size-[18px]" />
-              </Link>
-            </Button>
+            {user ? (
+              <Button asChild variant="primary" size="lg">
+                <Link href="/dashboard">
+                  Go to dashboard <ArrowRight className="size-[18px]" />
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="primary" size="lg">
+                <Link href="/auth/sign-up">
+                  Start coaching <ArrowRight className="size-[18px]" />
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="secondary" size="lg">
               <Link href="/#features">See how it works</Link>
             </Button>

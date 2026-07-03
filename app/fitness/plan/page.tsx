@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface Exercise {
   name: string;
@@ -87,7 +87,6 @@ export default function FitnessPlanPage() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSavingToFirebase, setIsSavingToFirebase] = useState(false);
   const [savedToFirebase, setSavedToFirebase] = useState(false);
-  const { toast } = useToast();
 
   // Add this function to ensure weekly routine data integrity
   const ensureValidWeeklyRoutine = (plan: any) => {
@@ -345,9 +344,8 @@ export default function FitnessPlanPage() {
       await savePlanToUserProfile(userId, planSummary);
 
       // Show success message
-      toast({
-        title: "Plan saved to your profile",
-        description: "You can access this plan anytime from your profile page",
+      toast.success('Plan saved to your profile', {
+        description: 'You can access this plan anytime from your profile page',
       });
 
       return true;
@@ -365,10 +363,8 @@ export default function FitnessPlanPage() {
 
     const user = auth.currentUser;
     if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to save this plan to your profile",
-        variant: "destructive"
+      toast.error('Sign in required', {
+        description: 'Please sign in to save this plan to your profile',
       });
       return;
     }
@@ -380,19 +376,16 @@ export default function FitnessPlanPage() {
 
       if (success) {
         setSavedToFirebase(true);
-        toast({
-          title: "Success!",
-          description: "Your fitness plan has been saved to your profile",
+        toast.success('Success!', {
+          description: 'Your fitness plan has been saved to your profile',
         });
       } else {
         throw new Error("Failed to save plan");
       }
     } catch (error) {
       console.error("Error saving plan:", error);
-      toast({
-        title: "Failed to save",
-        description: "There was a problem saving your plan. Please try again later.",
-        variant: "destructive"
+      toast.error('Failed to save', {
+        description: 'There was a problem saving your plan. Please try again later.',
       });
     } finally {
       setIsSavingToFirebase(false);

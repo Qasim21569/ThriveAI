@@ -1,7 +1,6 @@
 import React from 'react';
 import './globals.css';
 import { Metadata } from 'next';
-import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
 
 // Metadata for the app
@@ -30,7 +29,6 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
-        <Toaster />
       </body>
     </html>
   );

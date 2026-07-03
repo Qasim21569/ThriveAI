@@ -207,7 +207,11 @@ export default function ProfilePage() {
                   ) : savedPlans.length > 0 ? (
                     <div className="grid gap-4 sm:grid-cols-2">
                       {savedPlans.map((plan) => (
-                        <Link key={plan.id} href={`/fitness/plan/${plan.id}`} className="group">
+                        <Link
+                          key={plan.id}
+                          href={plan.type === 'mental' ? `/mental/report/${plan.id}` : `/fitness/plan/${plan.id}`}
+                          className="group"
+                        >
                           <Card className="h-full p-5 transition-[box-shadow,border-color] duration-base ease-standard group-hover:border-border-strong group-hover:shadow-md">
                             <div className="mb-2 flex items-center gap-2">
                               <Badge tone={plan.type === 'fitness' ? 'primary' : 'accent'}>
