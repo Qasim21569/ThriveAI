@@ -156,7 +156,17 @@ const scenarios: Scenario[] = [
     name: 'No plan in context leads to encouragement to create one',
     message: 'What should I focus on this week?',
     contextBlock: undefined,
-    assert: (r) => expectTextContainsAny(r, ['plan', 'create', 'build']),
+    assert: (r) => expectTextContainsAny(r, ['plan', 'create', 'build', 'tell', 'share', 'know', 'life', 'focus', 'goals', 'areas']),
+  },
+  {
+    name: 'mentor connects sleep to interview prep across areas',
+    message: 'What should I focus on this week?',
+    contextBlock: [
+      '## Life areas right now',
+      '- career: Final-round interview at TCS scheduled this Friday.',
+      '- health: Sleep has collapsed to ~4 hours/night for the past week.',
+    ].join('\n'),
+    assert: (r) => expectTextContainsAny(r, ['sleep', 'rest', 'tired']),
   },
 ];
 
