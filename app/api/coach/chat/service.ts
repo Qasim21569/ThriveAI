@@ -12,7 +12,7 @@ interface ChatTurn {
  * Assemble the system prompt: coach identity + safety rules (fixed, no
  * data dependency) followed by the pre-assembled context block (plan
  * summary + recent check-ins + rolling memory of older history). The
- * context block itself is built client-side by buildCoachContext() in
+ * context block itself is built client-side by buildMentorContext() in
  * lib/coach/context.ts, since that's where the Firestore reads happen —
  * this function just prepends the fixed identity layer to whatever
  * data-dependent context arrives in the request.

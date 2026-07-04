@@ -64,8 +64,8 @@ export default function CoachPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [contextBlock, setContextBlock] = useState<string | undefined>(undefined);
   const [hasModel, setHasModel] = useState(false);
-  const [lifeModel, setLifeModel] = useState<LifeModel | null>(null);
-  const [recentEvents, setRecentEvents] = useState<LifeEvent[]>([]);
+  const lifeModelRef = useRef<LifeModel | null>(null);
+  const recentEventsRef = useRef<LifeEvent[]>([]);
   const [failedRetry, setFailedRetry] = useState<{ userText: string; assistantId: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -88,7 +88,7 @@ export default function CoachPage() {
         setMessages(history);
         setContextBlock(ctx.contextBlock || undefined);
         setHasModel(ctx.hasModel);
-        setLifeModel(ctx.model);
+        lifeModelRef.current = ctx.model;
       } catch (error) {
         console.error('Error loading coach context:', error);
       } finally {
@@ -160,16 +160,14 @@ export default function CoachPage() {
 
       // Update the brain from this turn. Deliberately not awaited into the
       // UI path: extraction failure only means the brain is briefly stale.
-      if (lifeModel && finalText) {
+      // Refs (not state) so queued turns always read the latest model.
+      if (lifeModelRef.current && finalText) {
         const turnText = `User: ${userText}\nMentor: ${finalText}`;
-        runExtraction(user.uid, idToken, lifeModel, turnText).then((outcome) => {
+        runExtraction(user.uid, idToken, lifeModelRef.current, turnText).then((outcome) => {
           if (!outcome) return;
-          setLifeModel(outcome.model);
-          setRecentEvents((prev) => {
-            const merged = [...outcome.newEvents, ...prev].slice(0, 15);
-            setContextBlock(assembleMentorContext(outcome.model, merged) || undefined);
-            return merged;
-          });
+          lifeModelRef.current = outcome.model;
+          recentEventsRef.current = [...outcome.newEvents, ...recentEventsRef.current].slice(0, 15);
+          setContextBlock(assembleMentorContext(outcome.model, recentEventsRef.current) || undefined);
         });
       }
 
