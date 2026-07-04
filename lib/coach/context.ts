@@ -1,7 +1,9 @@
 import { getUserPlans, getPlan, pickActivePlan } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin } from '@/lib/firebase/checkins';
 import { getMemory, saveMemory } from '@/lib/firebase/memory';
-import { LIFE_AREAS, type LifeModel, type LifeEvent } from '@/lib/lifemodel/types';
+import { LIFE_AREAS, emptyLifeModel, type LifeModel, type LifeEvent } from '@/lib/lifemodel/types';
+import { getLifeModel, getRecentEvents } from '@/lib/firebase/lifeModel';
+import { runExtraction } from './extraction-client';
 
 // How many of the most recent check-ins are shown in full, verbatim.
 // Anything older than this window gets folded into the rolling summary
@@ -237,4 +239,73 @@ export function assembleMentorContext(model: LifeModel, recentEvents: LifeEvent[
   }
 
   return sections.join('\n\n');
+}
+
+export interface MentorContext {
+  contextBlock: string;
+  hasModel: boolean;
+  model: LifeModel | null;
+}
+
+/**
+ * One-time backfill (spec section 5): when no Life Model exists yet, feed
+ * the user's existing check-ins and active plan through the extraction
+ * pipeline to seed it. Returns null when there is nothing to seed from —
+ * the mentor then starts cold and the model is created by the first
+ * extraction after a real conversation.
+ */
+async function seedLifeModelFromHistory(uid: string, idToken: string): Promise<LifeModel | null> {
+  const [plans, checkins] = await Promise.all([getUserPlans(uid), getRecentCheckins(uid, 20)]);
+
+  const parts: string[] = [];
+  const activePlan = pickActivePlan(plans);
+  if (activePlan) {
+    const fullPlan = await getPlan(uid, activePlan.id);
+    if (fullPlan) {
+      parts.push(
+        `The user has an existing ${fullPlan.type} plan: ${summarizePlanForPrompt(fullPlan.type, fullPlan.data)}`,
+      );
+    }
+  }
+  if (checkins.length > 0) {
+    const lines = checkins
+      .map((c) => `- [${c.type}] (${c.createdAt.slice(0, 10)}) ${c.summary}`)
+      .join('\n');
+    parts.push(`The user's past check-ins, newest first:\n${lines}`);
+  }
+  if (parts.length === 0) return null;
+
+  const outcome = await runExtraction(uid, idToken, emptyLifeModel(), parts.join('\n\n'));
+  return outcome?.model ?? null;
+}
+
+/**
+ * Load the brain for a chat session: fetch the Life Model (seeding it from
+ * pre-Life-Model history on first use) plus recent events, and assemble
+ * the context block. Client-side because it needs the Firestore client SDK
+ * — same reasoning as buildCoachContext before it.
+ */
+export async function buildMentorContext(uid: string, idToken: string): Promise<MentorContext> {
+  let model: LifeModel | null = null;
+  try {
+    model = await getLifeModel(uid);
+    if (!model) model = await seedLifeModelFromHistory(uid, idToken);
+  } catch (error) {
+    console.error('Failed to load Life Model:', error);
+  }
+  if (!model) return { contextBlock: '', hasModel: false, model: null };
+
+  let events: LifeEvent[] = [];
+  try {
+    events = await getRecentEvents(uid, 15);
+  } catch (error) {
+    // Degrade gracefully: chat proceeds on the model alone (spec section 6).
+    console.error('Failed to load recent events:', error);
+  }
+
+  return {
+    contextBlock: assembleMentorContext(model, events),
+    hasModel: true,
+    model,
+  };
 }
