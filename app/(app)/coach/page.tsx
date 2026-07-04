@@ -7,17 +7,19 @@ import { auth } from '@/lib/firebase/firebaseConfig';
 import type { User } from 'firebase/auth';
 import { saveMessage, getRecentMessages, type ChatMessage } from '@/lib/firebase/messages';
 import { saveCheckin } from '@/lib/firebase/checkins';
-import { buildCoachContext } from '@/lib/coach/context';
+import { buildMentorContext, assembleMentorContext } from '@/lib/coach/context';
+import { runExtraction } from '@/lib/coach/extraction-client';
+import type { LifeModel, LifeEvent } from '@/lib/lifemodel/types';
 import { logCheckinArgsSchema, extractToolCall } from '@/lib/coach/tools';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 const SUGGESTED_PROMPTS = [
-  'Log today\'s workout',
+  'Here\'s how my day went…',
   'How have I been doing lately?',
   'What should I focus on this week?',
-  'Give me some motivation',
+  'Help me think through a decision',
 ];
 
 const ERROR_TEXT = "Sorry, I couldn't respond just now. Please try again.";
@@ -61,7 +63,9 @@ export default function CoachPage() {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [contextBlock, setContextBlock] = useState<string | undefined>(undefined);
-  const [hasPlan, setHasPlan] = useState(false);
+  const [hasModel, setHasModel] = useState(false);
+  const [lifeModel, setLifeModel] = useState<LifeModel | null>(null);
+  const [recentEvents, setRecentEvents] = useState<LifeEvent[]>([]);
   const [failedRetry, setFailedRetry] = useState<{ userText: string; assistantId: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -79,11 +83,12 @@ export default function CoachPage() {
         const idToken = await u.getIdToken();
         const [history, ctx] = await Promise.all([
           getRecentMessages(u.uid, 20),
-          buildCoachContext(u.uid, idToken),
+          buildMentorContext(u.uid, idToken),
         ]);
         setMessages(history);
         setContextBlock(ctx.contextBlock || undefined);
-        setHasPlan(ctx.hasPlan);
+        setHasModel(ctx.hasModel);
+        setLifeModel(ctx.model);
       } catch (error) {
         console.error('Error loading coach context:', error);
       } finally {
@@ -152,6 +157,21 @@ export default function CoachPage() {
       }
 
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: finalText } : m)));
+
+      // Update the brain from this turn. Deliberately not awaited into the
+      // UI path: extraction failure only means the brain is briefly stale.
+      if (lifeModel && finalText) {
+        const turnText = `User: ${userText}\nMentor: ${finalText}`;
+        runExtraction(user.uid, idToken, lifeModel, turnText).then((outcome) => {
+          if (!outcome) return;
+          setLifeModel(outcome.model);
+          setRecentEvents((prev) => {
+            const merged = [...outcome.newEvents, ...prev].slice(0, 15);
+            setContextBlock(assembleMentorContext(outcome.model, merged) || undefined);
+            return merged;
+          });
+        });
+      }
 
       if (finalText) {
         saveMessage(user.uid, 'assistant', finalText).catch((e) => console.error('Failed to save message:', e));
@@ -223,9 +243,9 @@ export default function CoachPage() {
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
       <div className="border-b border-border px-4 py-3.5">
-        <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Coach</h1>
+        <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Mentor</h1>
         <p className="text-xs text-text-muted">
-          {hasPlan ? 'Knows your active plan and recent check-ins' : 'No plan yet — create one for personalized advice'}
+          {hasModel ? 'Knows your goals, history, and whole picture' : 'Getting to know you — just start talking'}
         </p>
       </div>
 
