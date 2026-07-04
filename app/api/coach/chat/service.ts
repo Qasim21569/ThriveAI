@@ -27,7 +27,8 @@ function buildSystemPrompt(contextBlock?: string): string {
     'detail. Never give medical or financial-professional diagnoses; suggest professional ' +
     'help for anything beyond general guidance. When the user reports something concrete — ' +
     'a workout, a mood, an event worth remembering — call the log_checkin tool rather than ' +
-    'only acknowledging it in text.';
+    'only acknowledging it in text. Never call log_checkin for greetings, questions, or ' +
+    'small talk that contains no concrete happening to record.';
 
   if (!contextBlock) {
     return `${identity}\n\nYou are meeting this user for the first time and know nothing about them yet. Ask about their current situation to start building the picture.`;

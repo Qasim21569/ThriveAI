@@ -28,7 +28,40 @@ Rules:
 - Update an area's status only when the new information genuinely changes the picture.
 - Close a thread/goal ONLY by an id that exists in the provided Life Model.
 - Set profile.coachingStyle only on clear signals about how the user wants to be coached (e.g. "stop sugarcoating").
-- Do not restate things already present in the Life Model.`;
+- Do not restate things already present in the Life Model.
+- Omit optional fields entirely when you have nothing for them — never output empty strings.`;
+
+/**
+ * Models sometimes emit "" for optional fields instead of omitting them.
+ * An empty optional is semantically absent, so strip these before schema
+ * validation rather than failing the whole extraction on them.
+ */
+function stripEmptyOptionals(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const diff = raw as Record<string, unknown>;
+
+  if (Array.isArray(diff.areas)) {
+    for (const area of diff.areas as Record<string, unknown>[]) {
+      if (!area || typeof area !== 'object') continue;
+      for (const key of ['status', 'summary']) {
+        if (typeof area[key] === 'string' && (area[key] as string).trim() === '') delete area[key];
+      }
+    }
+  }
+  if (Array.isArray(diff.events)) {
+    diff.events = (diff.events as Record<string, unknown>[]).filter(
+      (e) => typeof e?.content === 'string' && (e.content as string).trim() !== '',
+    );
+  }
+  if (diff.profile && typeof diff.profile === 'object') {
+    const profile = diff.profile as Record<string, unknown>;
+    for (const key of ['identity', 'personality', 'coachingStyle']) {
+      if (typeof profile[key] === 'string' && (profile[key] as string).trim() === '') delete profile[key];
+    }
+    if (Object.keys(profile).length === 0) delete diff.profile;
+  }
+  return diff;
+}
 
 /**
  * One-shot, non-streamed Groq call that turns conversation text into a
@@ -75,7 +108,7 @@ export async function extractLifeModelDiff(
   const raw = data.choices?.[0]?.message?.content;
   if (!raw) throw new Error('Groq returned an empty extraction');
 
-  const parsed = extractionDiffSchema.safeParse(JSON.parse(raw));
+  const parsed = extractionDiffSchema.safeParse(stripEmptyOptionals(JSON.parse(raw)));
   if (!parsed.success) {
     console.error('Extraction failed schema validation:', parsed.error.flatten());
     throw new Error('Extraction output did not match schema');
