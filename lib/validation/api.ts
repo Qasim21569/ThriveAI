@@ -82,7 +82,20 @@ export const summarizeRequestSchema = z
   })
   .passthrough();
 
+// Sent by the client to /api/coach/extract to update the Life Model
+export const extractRequestSchema = z
+  .object({
+    conversationText: nonEmpty,
+    // The client's own current Life Model, passed through to the extraction
+    // prompt so the model can reference existing goal/thread ids. Shape is
+    // not validated here — it is client-owned data that only flows back
+    // into the prompt, never into Firestore from this route.
+    lifeModel: z.unknown(),
+  })
+  .passthrough();
+
 export type FitnessRequest = z.infer<typeof fitnessRequestSchema>;
 export type MentalRequest = z.infer<typeof mentalRequestSchema>;
 export type CoachChatRequest = z.infer<typeof coachChatRequestSchema>;
 export type SummarizeRequest = z.infer<typeof summarizeRequestSchema>;
+export type ExtractRequest = z.infer<typeof extractRequestSchema>;
