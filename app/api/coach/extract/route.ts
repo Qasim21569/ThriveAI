@@ -18,10 +18,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const lifeModelJson = JSON.stringify(parsed.data.lifeModel ?? {});
+  if (lifeModelJson.length > 20_000) {
+    return NextResponse.json({ error: 'Life model payload too large' }, { status: 400 });
+  }
+
   try {
     const diff = await extractLifeModelDiff(
       parsed.data.conversationText,
-      JSON.stringify(parsed.data.lifeModel ?? {}),
+      lifeModelJson,
     );
     return NextResponse.json({ diff });
   } catch (error) {

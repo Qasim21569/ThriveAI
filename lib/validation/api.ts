@@ -77,7 +77,7 @@ export const coachChatRequestSchema = z
 // Sent by the client to /api/coach/extract to update the Life Model
 export const extractRequestSchema = z
   .object({
-    conversationText: nonEmpty,
+    conversationText: nonEmpty.max(8000),
     // The client's own current Life Model, passed through to the extraction
     // prompt so the model can reference existing goal/thread ids. Shape is
     // not validated here — it is client-owned data that only flows back

@@ -66,6 +66,7 @@ export default function CoachPage() {
   const [hasModel, setHasModel] = useState(false);
   const lifeModelRef = useRef<LifeModel | null>(null);
   const recentEventsRef = useRef<LifeEvent[]>([]);
+  const extractionChainRef = useRef<Promise<void>>(Promise.resolve());
   const [failedRetry, setFailedRetry] = useState<{ userText: string; assistantId: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -158,12 +159,14 @@ export default function CoachPage() {
 
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: finalText } : m)));
 
-      // Update the brain from this turn. Deliberately not awaited into the
-      // UI path: extraction failure only means the brain is briefly stale.
-      // Refs (not state) so queued turns always read the latest model.
-      if (lifeModelRef.current && finalText) {
+      // Update the brain from this turn. Chained (not parallel) so a rapid
+      // next turn can never race an in-flight extraction and overwrite its
+      // model updates; reads the ref inside the chain for the same reason.
+      if (finalText) {
         const turnText = `User: ${userText}\nMentor: ${finalText}`;
-        runExtraction(user.uid, idToken, lifeModelRef.current, turnText).then((outcome) => {
+        extractionChainRef.current = extractionChainRef.current.then(async () => {
+          if (!lifeModelRef.current) return;
+          const outcome = await runExtraction(user.uid, idToken, lifeModelRef.current, turnText);
           if (!outcome) return;
           lifeModelRef.current = outcome.model;
           recentEventsRef.current = [...outcome.newEvents, ...recentEventsRef.current].slice(0, 15);
