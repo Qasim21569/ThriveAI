@@ -1,6 +1,7 @@
 import { getUserPlans, getPlan, pickActivePlan } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin } from '@/lib/firebase/checkins';
 import { getMemory, saveMemory } from '@/lib/firebase/memory';
+import { LIFE_AREAS, type LifeModel, type LifeEvent } from '@/lib/lifemodel/types';
 
 // How many of the most recent check-ins are shown in full, verbatim.
 // Anything older than this window gets folded into the rolling summary
@@ -156,4 +157,84 @@ export async function buildCoachContext(uid: string, idToken: string): Promise<C
     contextBlock: sections.join('\n\n'),
     hasPlan,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Life Model context (Plan 1: The Brain). Replaces the plan/check-in pipeline
+// above — old exports are removed once the chat page is rewired (Task 8).
+// ---------------------------------------------------------------------------
+
+// Per-layer character budgets (~4 chars/token, same approximation as BUDGET
+// above). Total worst case ≈ 4,000 chars ≈ 1,000 tokens of user context.
+const MENTOR_BUDGET = {
+  coachingStyle: 300,
+  profile: 500,
+  areaStatuses: 800,
+  goalsThreads: 700,
+  recentEvents: 800,
+  summaries: 900,
+} as const;
+
+/**
+ * Assemble the mentor's user-context block from the Life Model + recent
+ * events. Pure and deterministic — all Firestore reads happen in
+ * buildMentorContext (Task 7). Layer order follows the spec: coaching
+ * style, profile, area statuses, goals/threads, recent events, summaries.
+ */
+export function assembleMentorContext(model: LifeModel, recentEvents: LifeEvent[]): string {
+  const sections: string[] = [];
+
+  if (model.profile.coachingStyle) {
+    sections.push(
+      `## How to coach this user\n${truncateToBudget(model.profile.coachingStyle, MENTOR_BUDGET.coachingStyle)}`,
+    );
+  }
+
+  const profileText = [model.profile.identity, model.profile.personality]
+    .filter(Boolean)
+    .join(' ');
+  if (profileText) {
+    sections.push(`## Who they are\n${truncateToBudget(profileText, MENTOR_BUDGET.profile)}`);
+  }
+
+  const statusLines = LIFE_AREAS.filter((a) => model.areas[a].status)
+    .map((a) => `- ${a}: ${model.areas[a].status}`)
+    .join('\n');
+  if (statusLines) {
+    sections.push(
+      `## Life areas right now\n${truncateToBudget(statusLines, MENTOR_BUDGET.areaStatuses)}`,
+    );
+  }
+
+  const goalThreadLines = LIFE_AREAS.flatMap((a) => [
+    ...model.areas[a].goals
+      .filter((g) => g.status === 'active')
+      .map((g) => `- goal [${a}] ${g.text}${g.targetDate ? ` (by ${g.targetDate})` : ''}`),
+    ...model.areas[a].threads
+      .filter((t) => t.status === 'open')
+      .map((t) => `- open [${a}] ${t.text}`),
+  ]).join('\n');
+  if (goalThreadLines) {
+    sections.push(
+      `## Active goals and open threads\n${truncateToBudget(goalThreadLines, MENTOR_BUDGET.goalsThreads)}`,
+    );
+  }
+
+  const eventLines = recentEvents
+    .map((e) => `- ${e.date.slice(0, 10)} [${e.area}] ${e.content}`)
+    .join('\n');
+  if (eventLines) {
+    sections.push(`## Recent events\n${truncateToBudget(eventLines, MENTOR_BUDGET.recentEvents)}`);
+  }
+
+  const summaryLines = LIFE_AREAS.filter((a) => model.areas[a].summary)
+    .map((a) => `- ${a}: ${model.areas[a].summary}`)
+    .join('\n');
+  if (summaryLines) {
+    sections.push(
+      `## Earlier history (summarized)\n${truncateToBudget(summaryLines, MENTOR_BUDGET.summaries)}`,
+    );
+  }
+
+  return sections.join('\n\n');
 }
