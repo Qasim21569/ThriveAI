@@ -120,57 +120,64 @@ export default function BrainPage() {
           </FadeIn>
         ) : (
           <div className="space-y-6">
-            <ProfileCard profile={model.profile} onSave={saveProfile} />
+            <div id="wt-brain-profile">
+              <ProfileCard profile={model.profile} onSave={saveProfile} />
+            </div>
 
             <Stagger className="grid gap-4 md:grid-cols-2">
-              {LIFE_AREAS.map((areaId) => (
+              {LIFE_AREAS.map((areaId, index) => (
                 <StaggerItem key={areaId}>
-                  <AreaCard
-                    areaId={areaId}
-                    area={model.areas[areaId]}
-                    onSave={saveArea(areaId)}
-                    action={
-                      areaId === 'health'
-                        ? { label: 'Fitness assessment →', href: '/fitness/form' }
-                        : areaId === 'mental'
-                          ? { label: 'Wellbeing check →', href: '/mental/form' }
-                          : undefined
-                    }
-                  />
+                  {/* First area card gets the walkthrough edit-affordance target id */}
+                  <div id={index === 0 ? 'wt-brain-area-edit' : undefined}>
+                    <AreaCard
+                      areaId={areaId}
+                      area={model.areas[areaId]}
+                      onSave={saveArea(areaId)}
+                      action={
+                        areaId === 'health'
+                          ? { label: 'Fitness assessment →', href: '/fitness/form' }
+                          : areaId === 'mental'
+                            ? { label: 'Wellbeing check →', href: '/mental/form' }
+                            : undefined
+                      }
+                    />
+                  </div>
                 </StaggerItem>
               ))}
             </Stagger>
 
-            <Card>
-              <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
-              <CardContent>
-                {events.length === 0 ? (
-                  <FadeIn>
-                    <p className="text-sm text-text-muted">No events recorded yet.</p>
-                  </FadeIn>
-                ) : (
-                  <Stagger className="space-y-4">
-                    {timelineGroups.map(([day, dayEvents]) => (
-                      <StaggerItem key={day}>
-                        <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.08em] text-text-muted">
-                          {new Date(`${day}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
-                        </p>
-                        <div className="space-y-1.5">
-                          {dayEvents.map((e) => (
-                            <div key={e.id} className="flex items-start gap-2.5 rounded-md border border-border bg-surface-sunken px-3 py-2">
-                              <span className="mt-0.5 rounded-full bg-primary-soft px-2 py-0.5 font-mono text-[10px] uppercase text-primary">
-                                {e.area}
-                              </span>
-                              <p className="min-w-0 flex-1 text-sm text-text-body">{e.content}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </StaggerItem>
-                    ))}
-                  </Stagger>
-                )}
-              </CardContent>
-            </Card>
+            <div id="wt-brain-timeline">
+              <Card>
+                <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
+                <CardContent>
+                  {events.length === 0 ? (
+                    <FadeIn>
+                      <p className="text-sm text-text-muted">No events recorded yet.</p>
+                    </FadeIn>
+                  ) : (
+                    <Stagger className="space-y-4">
+                      {timelineGroups.map(([day, dayEvents]) => (
+                        <StaggerItem key={day}>
+                          <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.08em] text-text-muted">
+                            {new Date(`${day}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+                          </p>
+                          <div className="space-y-1.5">
+                            {dayEvents.map((e) => (
+                              <div key={e.id} className="flex items-start gap-2.5 rounded-md border border-border bg-surface-sunken px-3 py-2">
+                                <span className="mt-0.5 rounded-full bg-primary-soft px-2 py-0.5 font-mono text-[10px] uppercase text-primary">
+                                  {e.area}
+                                </span>
+                                <p className="min-w-0 flex-1 text-sm text-text-body">{e.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </StaggerItem>
+                      ))}
+                    </Stagger>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </div>

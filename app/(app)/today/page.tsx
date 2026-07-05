@@ -133,6 +133,7 @@ export default function TodayPage() {
         >
           {/* Streak chip — gold tokens (celebration hue, not interaction accent) */}
           <div
+            id="wt-today-streak"
             className="flex items-center gap-1.5 rounded-full border border-gold-500/30 bg-gold-50 px-3 py-1.5"
             aria-label={`${streak} day streak`}
           >
@@ -189,21 +190,23 @@ export default function TodayPage() {
         ) : (
           <>
             {/* Prompt chips at sunken elevation (surface-sunken well per elevation ladder) */}
-            <div className="mb-4 space-y-2">
+            <div id="wt-today-prompts" className="mb-4 space-y-2">
               {prompts.map((p) => (
                 <p key={p} className="rounded-lg border border-border bg-surface-sunken px-4 py-2.5 text-sm text-text-body">
                   {p}
                 </p>
               ))}
             </div>
-            <Textarea
-              value={entry}
-              onChange={(e) => setEntry(e.target.value)}
-              placeholder="Write it however it comes out — a sentence is enough."
-              className="min-h-[140px]"
-              disabled={submitting}
-              autoFocus
-            />
+            <div id="wt-today-entry">
+              <Textarea
+                value={entry}
+                onChange={(e) => setEntry(e.target.value)}
+                placeholder="Write it however it comes out — a sentence is enough."
+                className="min-h-[140px]"
+                disabled={submitting}
+                autoFocus
+              />
+            </div>
             <Button
               onClick={handleSubmit}
               variant="primary"
