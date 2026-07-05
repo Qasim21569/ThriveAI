@@ -11,6 +11,8 @@ import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { FadeIn } from '@/components/motion/fade-in';
 
 /**
  * Deliberately minimal. The previous version had toggles for dark mode,
@@ -67,8 +69,12 @@ export default function SettingsPage() {
 
   return (
     <div className="px-4 py-12">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mb-6 font-serif text-2xl font-semibold text-foreground md:text-3xl">Settings</h1>
+      <FadeIn className="mx-auto max-w-2xl">
+        <PageHeader
+          eyebrow="Account"
+          title="Settings"
+          className="mb-6"
+        />
 
         <Card className="mb-4">
           <CardHeader>
@@ -103,7 +109,7 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </FadeIn>
     </div>
   );
 }

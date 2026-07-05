@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { FadeIn } from '@/components/motion/fade-in';
 
 export default function ProfilePage() {
   const [savedPlans, setSavedPlans] = useState<PlanSummary[]>([]);
@@ -147,10 +149,12 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 py-12">
-      <div className="mx-auto max-w-app">
-        <h1 className="mb-8 text-center font-serif text-3xl font-semibold tracking-[-0.015em] text-foreground md:text-4xl">
-          Your profile
-        </h1>
+      <FadeIn className="mx-auto max-w-app">
+        <PageHeader
+          eyebrow="Account"
+          title="Your profile"
+          className="mb-8 text-center sm:text-left"
+        />
 
         {error && (
           <Alert tone="destructive" className="mx-auto mb-6 max-w-2xl">
@@ -159,6 +163,7 @@ export default function ProfilePage() {
         )}
 
         <div className="grid gap-6 md:grid-cols-[1fr_2fr]">
+          {/* Identity card — level 1 raised */}
           <Card className="h-fit p-6 text-center">
             <Avatar
               src={userData.photoURL}
@@ -173,6 +178,7 @@ export default function ProfilePage() {
             </p>
           </Card>
 
+          {/* Content card — level 1 raised */}
           <Card className="min-h-[400px] p-6">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="mb-6 grid w-full grid-cols-2 sm:w-auto sm:inline-grid">
@@ -271,7 +277,10 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-12 text-center">
-                    <p className="mb-4 text-text-muted">You don&apos;t have any saved plans yet.</p>
+                    <p className="mb-1 text-sm font-medium text-foreground">No saved plans yet</p>
+                    <p className="mb-4 text-sm text-text-muted">
+                      Create a fitness or mental wellness plan and it will be saved here.
+                    </p>
                     <Button onClick={() => router.push('/dashboard')} variant="outline">
                       <Plus className="size-4" /> Create a plan
                     </Button>
@@ -281,17 +290,18 @@ export default function ProfilePage() {
             </Tabs>
           </Card>
         </div>
-      </div>
+      </FadeIn>
 
+      {/* Delete confirmation modal — floating elevation (shadow-xl) */}
       {confirmDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => setConfirmDelete(null)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-border bg-surface p-6 shadow-lg"
+            className="w-full max-w-sm rounded-xl border border-border bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="font-serif text-lg font-semibold text-foreground">Delete this plan?</h2>

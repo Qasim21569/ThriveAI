@@ -9,6 +9,9 @@ import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { FadeIn } from '@/components/motion/fade-in';
+import { Stagger, StaggerItem } from '@/components/motion/stagger';
 
 const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>> = {
   workout: Dumbbell,
@@ -125,17 +128,19 @@ export default function ProgressPage() {
 
   if (loading) return <ProgressSkeleton />;
 
+  // Cap stagger list at 20 per motion guidelines
+  const visibleCheckins = checkins.slice(0, 20);
+
   return (
     <div className="px-4 py-12">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
-      <div className="mx-auto max-w-app">
-        <div className="mb-6">
-          <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">Progress</span>
-          <h1 className="font-serif text-2xl font-semibold text-foreground md:text-3xl">
-            Your check-in history
-          </h1>
-        </div>
+      <FadeIn className="mx-auto max-w-app">
+        <PageHeader
+          eyebrow="Progress"
+          title="Your check-in history"
+          className="mb-6"
+        />
 
         <Card className="mb-6 p-4">
           <div className="mb-3 text-sm font-medium text-foreground">Last 7 days</div>
@@ -168,38 +173,42 @@ export default function ProgressPage() {
           <CardContent>
             {checkins.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-12 text-center">
-                <p className="mb-1 text-text-muted">No check-ins yet.</p>
+                <p className="mb-1 text-sm font-medium text-foreground">No check-ins yet</p>
                 <p className="text-sm text-text-muted">
-                  Tell your coach about a workout or how you&apos;re feeling — it&apos;ll show up here.
+                  Tell your coach about a workout or how you&apos;re feeling — it will show up here.
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {checkins.map((c) => {
+              <Stagger className="space-y-3">
+                {visibleCheckins.map((c) => {
                   const Icon = TYPE_ICON[c.type];
                   return (
-                    <div
-                      key={c.id}
-                      className="flex items-start gap-3 rounded-md border border-border bg-surface-sunken p-3"
-                    >
-                      <div className="mt-0.5 flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                        <Icon className="size-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <Badge tone={TYPE_TONE[c.type]}>{c.type}</Badge>
-                          <span className="text-xs text-text-muted">{formatRelative(c.createdAt)}</span>
+                    <StaggerItem key={c.id}>
+                      <div className="flex items-start gap-3 rounded-md border border-border bg-surface-sunken p-3">
+                        <div className="mt-0.5 flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                          <Icon className="size-4" />
                         </div>
-                        <p className="text-sm text-text-body">{c.summary}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex items-center gap-2">
+                            <Badge tone={TYPE_TONE[c.type]}>{c.type}</Badge>
+                            <span className="text-xs text-text-muted">{formatRelative(c.createdAt)}</span>
+                          </div>
+                          <p className="text-sm text-text-body">{c.summary}</p>
+                        </div>
                       </div>
-                    </div>
+                    </StaggerItem>
                   );
                 })}
-              </div>
+                {checkins.length > 20 && (
+                  <p className="pt-1 text-center text-xs text-text-muted">
+                    Showing the 20 most recent check-ins.
+                  </p>
+                )}
+              </Stagger>
             )}
           </CardContent>
         </Card>
-      </div>
+      </FadeIn>
     </div>
   );
 }

@@ -14,6 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { FadeIn } from '@/components/motion/fade-in';
+import { Stagger, StaggerItem } from '@/components/motion/stagger';
 
 const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>> = {
   workout: Dumbbell,
@@ -97,13 +100,12 @@ export default function DashboardPage() {
     <div className="px-4 py-12">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
-      <div className="mx-auto max-w-app">
-        <div className="mb-8">
-          <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">Dashboard</span>
-          <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.015em] text-foreground md:text-4xl">
-            Welcome back, {displayName}
-          </h1>
-        </div>
+      <FadeIn className="mx-auto max-w-app">
+        <PageHeader
+          eyebrow="Dashboard"
+          title={`Welcome back, ${displayName}`}
+          className="mb-8"
+        />
 
         {!hasBrain && (
           <Card className="mb-6 border-accent/40 bg-primary-soft/40">
@@ -121,64 +123,67 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Stagger className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* Active plan card */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Dumbbell className="size-5 text-primary" />
-                  <CardTitle>Your active plan</CardTitle>
+          <StaggerItem className="md:col-span-2">
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell className="size-5 text-primary" />
+                    <CardTitle>Your active plan</CardTitle>
+                  </div>
+                  {activePlan && <Badge tone="primary">{activePlan.type}</Badge>}
                 </div>
-                {activePlan && <Badge tone="primary">{activePlan.type}</Badge>}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {activePlan ? (
-                <>
-                  <h3 className="mb-1 font-serif text-lg font-semibold text-foreground">
-                    {activePlan.title}
-                  </h3>
-                  <p className="mb-4 text-sm text-text-muted">
-                    Created {new Date(activePlan.createdAt).toLocaleDateString(undefined, {
-                      year: 'numeric', month: 'long', day: 'numeric',
-                    })}
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    <Button asChild variant="outline">
-                      <Link href={activePlan.type === 'mental' ? `/mental/report/${activePlan.id}` : `/fitness/plan/${activePlan.id}`}>
-                        View full plan <ArrowRight className="size-4" />
-                      </Link>
-                    </Button>
+              </CardHeader>
+              <CardContent>
+                {activePlan ? (
+                  <>
+                    <h3 className="mb-1 font-serif text-lg font-semibold text-foreground">
+                      {activePlan.title}
+                    </h3>
+                    <p className="mb-4 text-sm text-text-muted">
+                      Created {new Date(activePlan.createdAt).toLocaleDateString(undefined, {
+                        year: 'numeric', month: 'long', day: 'numeric',
+                      })}
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button asChild variant="outline">
+                        <Link href={activePlan.type === 'mental' ? `/mental/report/${activePlan.id}` : `/fitness/plan/${activePlan.id}`}>
+                          View full plan <ArrowRight className="size-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild variant="primary">
+                        <Link href="/coach">
+                          <MessageCircle className="size-4" /> Chat with your coach
+                        </Link>
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
+                    <p className="mb-1 text-sm font-medium text-foreground">No active plan yet</p>
+                    <p className="mb-4 text-sm text-text-muted">Create one and your coach will track it alongside everything else it knows about you.</p>
                     <Button asChild variant="primary">
-                      <Link href="/coach">
-                        <MessageCircle className="size-4" /> Chat with your coach
+                      <Link href="/fitness/form">
+                        <Plus className="size-4" /> Create your first plan
                       </Link>
                     </Button>
                   </div>
-                </>
-              ) : (
-                <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
-                  <p className="mb-4 text-text-muted">You don&apos;t have a plan yet.</p>
-                  <Button asChild variant="primary">
-                    <Link href="/fitness/form">
-                      <Plus className="size-4" /> Create your first plan
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </StaggerItem>
 
-          <div className="flex flex-col gap-6">
+          <StaggerItem className="flex flex-col gap-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Flame className="size-5 text-accent" />
+                    <Flame className="size-5 text-gold-500" />
                     <CardTitle>Today&apos;s check-in</CardTitle>
                   </div>
-                  <Badge tone="primary">{streak} day{streak === 1 ? '' : 's'}</Badge>
+                  <Badge tone="gold">{streak} day{streak === 1 ? '' : 's'}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -207,8 +212,8 @@ export default function DashboardPage() {
                 </Button>
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </StaggerItem>
+        </Stagger>
 
         <Card className="mt-6">
           <CardHeader>
@@ -226,9 +231,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {recentCheckins.length === 0 ? (
-              <p className="text-sm text-text-muted">
-                Nothing logged yet — tell your coach about a workout or how you&apos;re feeling.
-              </p>
+              <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
+                <p className="mb-1 text-sm font-medium text-foreground">Nothing logged yet</p>
+                <p className="text-sm text-text-muted">
+                  Tell your coach about a workout or how you&apos;re feeling — it will show up here.
+                </p>
+              </div>
             ) : (
               <div className="space-y-2.5">
                 {recentCheckins.map((c) => {
@@ -254,7 +262,7 @@ export default function DashboardPage() {
             </Link>
           </div>
         )}
-      </div>
+      </FadeIn>
     </div>
   );
 }
