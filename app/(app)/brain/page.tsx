@@ -14,6 +14,11 @@ import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { FadeIn } from '@/components/motion/fade-in';
+import { Stagger, StaggerItem } from '@/components/motion/stagger';
+
+const TIMELINE_CAP = 20;
 
 function groupEventsByDate(events: LifeEvent[]): [string, LifeEvent[]][] {
   const groups = new Map<string, LifeEvent[]>();
@@ -80,66 +85,73 @@ export default function BrainPage() {
     );
   }
 
+  // Flatten timeline rows and cap at TIMELINE_CAP
+  const allEvents = events.slice(0, TIMELINE_CAP);
+  const timelineGroups = groupEventsByDate(allEvents);
+
   return (
     <div className="px-4 py-10">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
       <div className="mx-auto max-w-app">
         <div className="mb-8">
-          <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">Brain</span>
-          <h1 className="mt-2 font-serif text-3xl font-semibold text-foreground md:text-4xl">
-            What your mentor knows
-          </h1>
-          <p className="mt-2 text-sm text-text-muted">
-            Everything here was learned from your conversations and check-ins. Correct anything — your edits win.
-          </p>
+          <PageHeader
+            eyebrow="Brain"
+            title="What your mentor knows"
+            sub="Everything here was learned from your conversations and check-ins. Correct anything — your edits win."
+          />
         </div>
 
         {!model ? (
-          <Card>
-            <CardContent className="px-6 py-12 text-center">
-              <BrainIcon className="mx-auto mb-4 size-10 text-text-muted" />
-              <p className="mb-2 font-serif text-lg font-semibold text-foreground">Nothing learned yet</p>
-              <p className="mb-6 text-sm text-text-muted">
-                The brain builds itself from your daily check-ins and chats.
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button asChild variant="primary"><Link href="/today">Do today&apos;s check-in</Link></Button>
-                <Button asChild variant="outline"><Link href="/coach">Talk to your mentor</Link></Button>
-              </div>
-            </CardContent>
-          </Card>
+          <FadeIn>
+            <Card>
+              <CardContent className="px-6 py-12 text-center">
+                <BrainIcon className="mx-auto mb-4 size-10 text-text-muted" />
+                <p className="mb-2 font-serif text-lg font-semibold text-foreground">Nothing learned yet</p>
+                <p className="mb-6 text-sm text-text-muted">
+                  The brain builds itself from your daily check-ins and chats.
+                </p>
+                <div className="flex justify-center gap-3">
+                  <Button asChild variant="primary"><Link href="/today">Do today&apos;s check-in</Link></Button>
+                  <Button asChild variant="outline"><Link href="/coach">Talk to your mentor</Link></Button>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
         ) : (
           <div className="space-y-6">
             <ProfileCard profile={model.profile} onSave={saveProfile} />
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <Stagger className="grid gap-4 md:grid-cols-2">
               {LIFE_AREAS.map((areaId) => (
-                <AreaCard
-                  key={areaId}
-                  areaId={areaId}
-                  area={model.areas[areaId]}
-                  onSave={saveArea(areaId)}
-                  action={
-                    areaId === 'health'
-                      ? { label: 'Fitness assessment →', href: '/fitness/form' }
-                      : areaId === 'mental'
-                        ? { label: 'Wellbeing check →', href: '/mental/form' }
-                        : undefined
-                  }
-                />
+                <StaggerItem key={areaId}>
+                  <AreaCard
+                    areaId={areaId}
+                    area={model.areas[areaId]}
+                    onSave={saveArea(areaId)}
+                    action={
+                      areaId === 'health'
+                        ? { label: 'Fitness assessment →', href: '/fitness/form' }
+                        : areaId === 'mental'
+                          ? { label: 'Wellbeing check →', href: '/mental/form' }
+                          : undefined
+                    }
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
 
             <Card>
               <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
               <CardContent>
                 {events.length === 0 ? (
-                  <p className="text-sm text-text-muted">No events recorded yet.</p>
+                  <FadeIn>
+                    <p className="text-sm text-text-muted">No events recorded yet.</p>
+                  </FadeIn>
                 ) : (
-                  <div className="space-y-4">
-                    {groupEventsByDate(events).map(([day, dayEvents]) => (
-                      <div key={day}>
+                  <Stagger className="space-y-4">
+                    {timelineGroups.map(([day, dayEvents]) => (
+                      <StaggerItem key={day}>
                         <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.08em] text-text-muted">
                           {new Date(`${day}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
                         </p>
@@ -153,9 +165,9 @@ export default function BrainPage() {
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </StaggerItem>
                     ))}
-                  </div>
+                  </Stagger>
                 )}
               </CardContent>
             </Card>

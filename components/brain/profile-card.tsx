@@ -6,6 +6,7 @@ import type { Profile } from '@/lib/lifemodel/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { MentorVoice } from '@/components/ui/mentor-voice';
 
 const FIELDS: { key: keyof Profile; label: string; placeholder: string }[] = [
   { key: 'identity', label: 'Who you are', placeholder: 'Not captured yet — the mentor learns this as you talk.' },
@@ -64,7 +65,9 @@ export function ProfileCard({ profile, onSave }: { profile: Profile; onSave: (p:
                 disabled={saving}
               />
             ) : (
-              <p className="text-sm text-text-body">{profile[key] || <span className="text-text-muted">{placeholder}</span>}</p>
+              profile[key]
+                ? <MentorVoice className="block text-sm">{profile[key]}</MentorVoice>
+                : <span className="text-sm text-text-muted">{placeholder}</span>
             )}
           </div>
         ))}

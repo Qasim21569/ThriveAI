@@ -6,8 +6,10 @@ import { Pencil, Check, X, Plus, CircleCheck, CircleDot } from 'lucide-react';
 import type { AreaState, LifeAreaId } from '@/lib/lifemodel/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { MentorVoice } from '@/components/ui/mentor-voice';
 
 const AREA_LABEL: Record<LifeAreaId, string> = {
   career: 'Career',
@@ -82,7 +84,7 @@ export function AreaCard({
   const isEmpty = !area.status && !area.summary && activeGoals.length === 0 && area.threads.length === 0;
 
   return (
-    <Card>
+    <Card interactive>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -125,7 +127,9 @@ export function AreaCard({
               {editing ? (
                 <Textarea value={draftStatus} onChange={(e) => setDraftStatus(e.target.value)} rows={2} disabled={saving} />
               ) : (
-                <p className="text-sm text-text-body">{area.status || <span className="text-text-muted">—</span>}</p>
+                area.status
+                  ? <MentorVoice className="block text-sm">{area.status}</MentorVoice>
+                  : <span className="text-sm text-text-muted">—</span>
               )}
             </div>
 
@@ -135,7 +139,7 @@ export function AreaCard({
                 {editing ? (
                   <Textarea value={draftSummary} onChange={(e) => setDraftSummary(e.target.value)} rows={2} disabled={saving} />
                 ) : (
-                  <p className="text-sm text-text-body">{area.summary}</p>
+                  <MentorVoice className="block text-sm">{area.summary}</MentorVoice>
                 )}
               </div>
             )}
@@ -191,11 +195,11 @@ export function AreaCard({
         {editing && (
           <div className="space-y-2 border-t border-border pt-3">
             <div className="flex gap-2">
-              <input
+              <Input
                 value={newGoal}
                 onChange={(e) => setNewGoal(e.target.value)}
                 placeholder="Add a goal…"
-                className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm"
+                className="min-w-0 flex-1"
                 disabled={saving}
               />
               <Button size="sm" variant="outline" onClick={addGoal} disabled={saving || !newGoal.trim()} aria-label="Add goal">
@@ -203,11 +207,11 @@ export function AreaCard({
               </Button>
             </div>
             <div className="flex gap-2">
-              <input
+              <Input
                 value={newThread}
                 onChange={(e) => setNewThread(e.target.value)}
                 placeholder="Add an open loop…"
-                className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm"
+                className="min-w-0 flex-1"
                 disabled={saving}
               />
               <Button size="sm" variant="outline" onClick={addThread} disabled={saving || !newThread.trim()} aria-label="Add thread">
