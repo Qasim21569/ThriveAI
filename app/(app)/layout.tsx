@@ -1,4 +1,5 @@
 import { AppNav } from '@/components/app/app-nav';
+import { PageTransition } from '@/components/motion/page-transition';
 
 /**
  * Shared shell for every authenticated app page (dashboard, coach,
@@ -11,7 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
-      {children}
+      <PageTransition>{children}</PageTransition>
     </div>
   );
 }
