@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { FadeIn } from '@/components/motion/fade-in';
+import { motion } from 'framer-motion';
 
 export default function ProfilePage() {
   const [savedPlans, setSavedPlans] = useState<PlanSummary[]>([]);
@@ -294,15 +295,21 @@ export default function ProfilePage() {
 
       {/* Delete confirmation modal — floating elevation (shadow-xl) */}
       {confirmDelete && (
-        <div
+        <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => setConfirmDelete(null)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
         >
-          <div
+          <motion.div
             className="w-full max-w-sm rounded-xl border border-border bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
           >
             <h2 className="font-serif text-lg font-semibold text-foreground">Delete this plan?</h2>
             <p className="mt-2 text-sm text-text-muted">
@@ -316,8 +323,8 @@ export default function ProfilePage() {
                 <Trash2 className="size-3.5" /> Delete
               </Button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );
