@@ -4,17 +4,15 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { User, Settings, LogOut, Menu, X } from 'lucide-react';
+import { User, Settings, LogOut, Menu, X, LayoutDashboard, TrendingUp } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { useAuth } from '@/lib/firebase/authContext';
 import { Avatar } from '@/components/ui/avatar';
 
 const NAV_LINKS = [
-  { label: 'Dashboard', href: '/dashboard' },
   { label: 'Today', href: '/today' },
   { label: 'Coach', href: '/coach' },
   { label: 'Brain', href: '/brain' },
-  { label: 'Progress', href: '/progress' },
 ];
 
 /**
@@ -51,7 +49,7 @@ export function AppNav() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-content items-center justify-between px-6 py-3">
-        <Link href="/dashboard" className="flex items-center" aria-label="ThriveAI dashboard">
+        <Link href="/today" className="flex items-center" aria-label="ThriveAI home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/thriveai-logo.svg" width={150} height={28} alt="ThriveAI" />
         </Link>
@@ -92,6 +90,20 @@ export function AppNav() {
                 <p className="truncate text-sm font-medium text-foreground">{user?.displayName || 'Account'}</p>
                 <p className="truncate text-xs text-text-muted">{user?.email}</p>
               </div>
+              <Link
+                href="/dashboard"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text-body transition-colors hover:bg-muted"
+              >
+                <LayoutDashboard className="size-4" /> Dashboard
+              </Link>
+              <Link
+                href="/progress"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text-body transition-colors hover:bg-muted"
+              >
+                <TrendingUp className="size-4" /> Progress
+              </Link>
               <Link
                 href="/profile"
                 onClick={() => setMenuOpen(false)}
@@ -142,6 +154,20 @@ export function AppNav() {
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-1 border-t border-border pt-3">
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/progress"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted"
+              >
+                Progress
+              </Link>
               <Link
                 href="/profile"
                 onClick={() => setMobileOpen(false)}

@@ -20,8 +20,8 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   },
   {
     Icon: TrendingUp,
-    title: 'Four areas, one place',
-    desc: 'Fitness, career, finances, and mind — coordinated, not scattered.',
+    title: 'Your whole life, one place',
+    desc: 'One mentor that sees across every area — coordinated, not scattered.',
   },
 ];
 

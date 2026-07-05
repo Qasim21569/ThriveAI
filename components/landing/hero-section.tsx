@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/firebase/authContext';
 
 const STATS: [string, string][] = [
-  ['4-in-1', 'coaching areas'],
+  ['1 mentor', 'your whole life'],
   ['24/7', 'always available'],
   ['100%', 'personalized'],
 ];
@@ -44,14 +44,14 @@ export const HeroSection = () => {
             <span className="text-accent">Transform your life.</span>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-text-body">
-            Personalized guidance to help you thrive in fitness, career, finances, and mental
-            wellbeing — all in one calm, private place.
+            One AI life mentor that knows you — helping you grow across every area of life in one
+            calm, private place.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {user ? (
               <Button asChild variant="primary" size="lg">
-                <Link href="/dashboard">
-                  Go to dashboard <ArrowRight className="size-[18px]" />
+                <Link href="/today">
+                  Go to today <ArrowRight className="size-[18px]" />
                 </Link>
               </Button>
             ) : (
