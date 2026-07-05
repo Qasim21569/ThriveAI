@@ -11,7 +11,9 @@ import { Avatar } from '@/components/ui/avatar';
 
 const NAV_LINKS = [
   { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Today', href: '/today' },
   { label: 'Coach', href: '/coach' },
+  { label: 'Brain', href: '/brain' },
   { label: 'Progress', href: '/progress' },
 ];
 

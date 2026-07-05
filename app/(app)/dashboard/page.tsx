@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote, CalendarCheck } from 'lucide-react';
+import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote, CalendarCheck, Flame } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { getUserPlans, pickActivePlan, type PlanSummary } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
+import { computeStreak } from '@/lib/checkins/streak';
 import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ export default function DashboardPage() {
   const [displayName, setDisplayName] = useState('there');
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [recentCheckins, setRecentCheckins] = useState<Checkin[]>([]);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
@@ -69,10 +71,11 @@ export default function DashboardPage() {
       try {
         const [userPlans, checkins] = await Promise.all([
           getUserPlans(user.uid),
-          getRecentCheckins(user.uid, 3),
+          getRecentCheckins(user.uid, 60),
         ]);
         setPlans(userPlans);
-        setRecentCheckins(checkins);
+        setRecentCheckins(checkins.slice(0, 3));
+        setStreak(computeStreak(checkins.map((c) => c.createdAt), new Date().toISOString().slice(0, 10)));
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -147,23 +150,44 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Coach CTA card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <MessageCircle className="size-5 text-accent" />
-                <CardTitle>Ask your coach</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-text-body">
-                Get advice, adjust your plan, or just check in — your coach knows your plan.
-              </p>
-              <Button asChild variant="accent" className="w-full">
-                <Link href="/coach">Open chat</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame className="size-5 text-accent" />
+                    <CardTitle>Today&apos;s check-in</CardTitle>
+                  </div>
+                  <Badge tone="primary">{streak} day{streak === 1 ? '' : 's'}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm text-text-body">
+                  Two minutes. Your mentor remembers all of it.
+                </p>
+                <Button asChild variant="primary" className="w-full">
+                  <Link href="/today">Check in</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="size-5 text-accent" />
+                  <CardTitle>Ask your mentor</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm text-text-body">
+                  Advice, decisions, or just a check-in — it knows your whole picture.
+                </p>
+                <Button asChild variant="accent" className="w-full">
+                  <Link href="/coach">Open chat</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <Card className="mt-6">
