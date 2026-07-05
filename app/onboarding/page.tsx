@@ -12,6 +12,9 @@ import { emptyLifeModel, LIFE_AREAS, type LifeModel } from '@/lib/lifemodel/type
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { MentorVoice } from '@/components/ui/mentor-voice';
+import { FadeIn } from '@/components/motion/fade-in';
+import { Stagger, StaggerItem } from '@/components/motion/stagger';
 
 interface Bubble {
   id: string;
@@ -123,7 +126,7 @@ export default function OnboardingPage() {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
             body: JSON.stringify({ area: current.area, question: current.question, answer: text }),
           });
-          if (res.ok) followup = (await res.json()).followup;
+          if (res.ok) followup = ((await res.json()) as { followup: string | null }).followup;
         } catch (error) {
           console.error('Follow-up fetch failed (skipping):', error);
         }
@@ -146,7 +149,8 @@ export default function OnboardingPage() {
     }
   };
 
-  const progress = Math.min(questionIndex, INTERVIEW_QUESTIONS.length);
+  // Fixed: show "1 of 5" on the first question (was showing "0 of 5")
+  const progress = Math.min(questionIndex + 1, INTERVIEW_QUESTIONS.length);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -169,22 +173,24 @@ export default function OnboardingPage() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
             <div className="mx-auto flex max-w-xl flex-col gap-3">
               {bubbles.map((b) => (
-                <div key={b.id} className={`flex ${b.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div
-                    className={[
-                      'max-w-[85%] whitespace-pre-wrap rounded-lg px-4 py-2.5 text-sm leading-relaxed',
-                      b.role === 'user'
-                        ? 'rounded-br-xs bg-primary text-primary-foreground'
-                        : 'rounded-bl-xs border border-border bg-surface-sunken text-text-body',
-                    ].join(' ')}
-                  >
-                    {b.text}
+                <FadeIn key={b.id}>
+                  <div className={`flex ${b.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={[
+                        'max-w-[85%] whitespace-pre-wrap rounded-lg px-4 py-2.5 text-sm leading-relaxed',
+                        b.role === 'user'
+                          ? 'rounded-br-xs bg-primary text-primary-foreground'
+                          : 'rounded-bl-xs border border-border bg-surface-sunken text-text-body',
+                      ].join(' ')}
+                    >
+                      {b.text}
+                    </div>
                   </div>
-                </div>
+                </FadeIn>
               ))}
             </div>
           </div>
-          <div className="border-t border-border px-4 py-3.5">
+          <div className="border-t border-border bg-surface-sunken px-4 py-3.5">
             <div className="mx-auto flex max-w-xl items-end gap-2.5">
               <Textarea
                 value={input}
@@ -216,21 +222,29 @@ export default function OnboardingPage() {
       {phase === 'playback' && seededModel && (
         <div className="flex-1 overflow-y-auto px-4 py-8">
           <div className="mx-auto max-w-xl">
-            <h2 className="mb-1 font-serif text-2xl font-semibold text-foreground">Here&apos;s my picture of you</h2>
+            <h2 className="mb-1 font-serif text-[30px] font-semibold leading-tight tracking-[-0.015em] text-foreground md:text-[36px]">
+              Here&apos;s my picture of you
+            </h2>
             <p className="mb-6 text-sm text-text-muted">Correct anything — your edits always win.</p>
             {seededModel.profile.identity && (
-              <p className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-sm text-text-body">
-                {seededModel.profile.identity}
-              </p>
+              <div className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3">
+                <MentorVoice rule className="block text-sm leading-relaxed">
+                  {seededModel.profile.identity}
+                </MentorVoice>
+              </div>
             )}
-            <div className="mb-8 space-y-3">
+            <Stagger className="mb-8 space-y-3">
               {LIFE_AREAS.filter((a) => seededModel.areas[a].status).map((a) => (
-                <div key={a} className="rounded-lg border border-border bg-surface px-4 py-3">
-                  <p className="mb-0.5 font-mono text-xs uppercase tracking-[0.08em] text-accent">{AREA_LABEL[a]}</p>
-                  <p className="text-sm text-text-body">{seededModel.areas[a].status}</p>
-                </div>
+                <StaggerItem key={a}>
+                  <div className="rounded-lg border border-border bg-surface px-4 py-3 shadow-sm">
+                    <p className="mb-0.5 font-mono text-xs uppercase tracking-[0.08em] text-accent">{AREA_LABEL[a]}</p>
+                    <MentorVoice className="block text-sm leading-relaxed">
+                      {seededModel.areas[a].status}
+                    </MentorVoice>
+                  </div>
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button variant="primary" className="flex-1" onClick={() => router.push('/today')}>
                 Looks right — let&apos;s go <ArrowRight className="size-4" />
