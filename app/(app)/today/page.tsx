@@ -33,6 +33,7 @@ export default function TodayPage() {
   const [entry, setEntry] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [reaction, setReaction] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
@@ -67,12 +68,20 @@ export default function TodayPage() {
   const handleSubmit = async () => {
     const text = entry.trim();
     if (!text || submitting || !user) return;
+    setSaveError(false);
     setSubmitting(true);
+    const wasLoggedToday = loggedToday;
     try {
       // The raw log is truth: persist first, AI afterwards.
-      await saveCheckin(user.uid, 'daily', text.slice(0, 1500));
+      try {
+        await saveCheckin(user.uid, 'daily', text.slice(0, 1500));
+      } catch (error) {
+        console.error('Failed to save check-in:', error);
+        setSaveError(true);
+        return;
+      }
       setLoggedToday(true);
-      setStreak((s) => (s === 0 ? 1 : s + (loggedToday ? 0 : 1)));
+      setStreak((s) => (s === 0 ? 1 : s + (wasLoggedToday ? 0 : 1)));
 
       const idToken = await user.getIdToken();
       const checkinText = `Daily check-in.\nPrompts shown: ${prompts.join(' | ')}\nAnswer: ${text}`;
@@ -169,6 +178,11 @@ export default function TodayPage() {
             >
               {submitting ? 'Logging…' : (<><Send className="size-4" /> Log today</>)}
             </Button>
+            {saveError && (
+              <p className="mt-3 text-center text-xs text-destructive">
+                Couldn&apos;t save your check-in — check your connection and try again.
+              </p>
+            )}
             {loggedToday && (
               <p className="mt-3 text-center text-xs text-text-muted">
                 Already logged today — this adds to it.
