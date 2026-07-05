@@ -11,7 +11,7 @@ export const Footer = () => {
           <img src="/brand/thriveai-logo.svg" width={148} height={28} alt="ThriveAI" />
         </Link>
         <span className="text-sm text-text-muted">
-          © {new Date().getFullYear()} ThriveAI · Elevate your potential.
+          © {new Date().getFullYear()} ThriveAI · A mentor that actually knows you.
         </span>
       </div>
     </footer>

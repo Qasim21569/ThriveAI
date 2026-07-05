@@ -51,10 +51,10 @@ export const Navbar = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full border-b transition-colors duration-base ease-standard ${
+      className={`sticky top-0 z-40 w-full border-b transition-[border-color,background-color,box-shadow] duration-base ease-standard ${
         scrolled
-          ? 'border-border bg-background/85 backdrop-blur-md'
-          : 'border-transparent bg-background/60 backdrop-blur-sm'
+          ? 'border-border bg-background/85 shadow-md backdrop-blur-md'
+          : 'border-transparent bg-background/60 shadow-none backdrop-blur-sm'
       }`}
     >
       <div className="mx-auto flex max-w-content items-center justify-between px-6 py-3.5">
