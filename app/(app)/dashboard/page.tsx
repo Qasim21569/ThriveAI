@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote, CalendarCheck, Flame } from 'lucide-react';
+import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote, CalendarCheck, Flame, Sparkles } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { getUserPlans, pickActivePlan, type PlanSummary } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
+import { getLifeModel } from '@/lib/firebase/lifeModel';
 import { computeStreak } from '@/lib/checkins/streak';
 import AuthModal from '@/components/auth/AuthModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +60,7 @@ export default function DashboardPage() {
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [recentCheckins, setRecentCheckins] = useState<Checkin[]>([]);
   const [streak, setStreak] = useState(0);
+  const [hasBrain, setHasBrain] = useState(true);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
@@ -69,13 +71,15 @@ export default function DashboardPage() {
       }
       setDisplayName(user.displayName?.split(' ')[0] || 'there');
       try {
-        const [userPlans, checkins] = await Promise.all([
+        const [userPlans, checkins, model] = await Promise.all([
           getUserPlans(user.uid),
           getRecentCheckins(user.uid, 60),
+          getLifeModel(user.uid),
         ]);
         setPlans(userPlans);
         setRecentCheckins(checkins.slice(0, 3));
         setStreak(computeStreak(checkins.map((c) => c.createdAt), new Date().toISOString().slice(0, 10)));
+        setHasBrain(model !== null);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -100,6 +104,22 @@ export default function DashboardPage() {
             Welcome back, {displayName}
           </h1>
         </div>
+
+        {!hasBrain && (
+          <Card className="mb-6 border-accent/40 bg-primary-soft/40">
+            <CardContent className="flex flex-col items-start gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <Sparkles className="size-5 flex-shrink-0 text-accent" />
+                <p className="text-sm text-text-body">
+                  Your mentor doesn&apos;t know you yet — a five-minute intro changes everything.
+                </p>
+              </div>
+              <Button asChild variant="primary">
+                <Link href="/onboarding">Meet your mentor</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* Active plan card */}

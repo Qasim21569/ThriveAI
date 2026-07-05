@@ -28,7 +28,7 @@ export default function SignUpPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user && !success) {
-        router.push('/dashboard');
+        router.push('/onboarding');
       }
     });
 
@@ -75,10 +75,10 @@ export default function SignUpPage() {
 
       // Account creation signs the user in immediately — no need to bounce
       // through the sign-in page. Show a brief success flash, then go
-      // straight to the dashboard.
+      // straight to the onboarding.
       setSuccess(true);
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/onboarding');
       }, 800);
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
