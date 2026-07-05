@@ -1,0 +1,262 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Send, Sparkles, ArrowRight, Pencil } from 'lucide-react';
+import { auth } from '@/lib/firebase/firebaseConfig';
+import type { User } from 'firebase/auth';
+import { INTERVIEW_QUESTIONS, buildInterviewTranscript, type InterviewEntry } from '@/lib/onboarding/interview';
+import { runExtraction } from '@/lib/coach/extraction-client';
+import { getLifeModel } from '@/lib/firebase/lifeModel';
+import { emptyLifeModel, LIFE_AREAS, type LifeModel } from '@/lib/lifemodel/types';
+import AuthModal from '@/components/auth/AuthModal';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+
+interface Bubble {
+  id: string;
+  role: 'mentor' | 'user';
+  text: string;
+}
+
+type Phase = 'interview' | 'seeding' | 'playback' | 'fallback';
+
+const AREA_LABEL: Record<string, string> = {
+  career: 'Career',
+  health: 'Health',
+  mental: 'Mental',
+  financial: 'Financial',
+  social: 'Social',
+};
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [phase, setPhase] = useState<Phase>('interview');
+  const [bubbles, setBubbles] = useState<Bubble[]>([]);
+  const [entries, setEntries] = useState<InterviewEntry[]>([]);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [pendingFollowup, setPendingFollowup] = useState<string | null>(null);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [seededModel, setSeededModel] = useState<LifeModel | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((u) => {
+      if (!u) {
+        setShowAuthModal(true);
+        return;
+      }
+      setUser(u);
+      setBubbles([
+        { id: 'intro', role: 'mentor', text: "Hi — I'm your mentor. Five quick questions so I actually know you, then we're done. Nothing is shared; you can correct anything later." },
+        { id: 'q0', role: 'mentor', text: INTERVIEW_QUESTIONS[0].question },
+      ]);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [bubbles, phase]);
+
+  const finishInterview = async (finalEntries: InterviewEntry[], currentUser: User) => {
+    setPhase('seeding');
+    try {
+      const idToken = await currentUser.getIdToken();
+      const transcript = buildInterviewTranscript(finalEntries);
+      if (!transcript) {
+        setPhase('fallback');
+        return;
+      }
+      const base = (await getLifeModel(currentUser.uid).catch(() => null)) ?? emptyLifeModel();
+      const outcome = await runExtraction(currentUser.uid, idToken, base, transcript);
+      if (outcome) {
+        setSeededModel(outcome.model);
+        setPhase('playback');
+      } else {
+        setPhase('fallback');
+      }
+    } catch (error) {
+      console.error('Onboarding seeding failed:', error);
+      setPhase('fallback');
+    }
+  };
+
+  const askNext = (nextIndex: number, finalEntries: InterviewEntry[], currentUser: User) => {
+    if (nextIndex < INTERVIEW_QUESTIONS.length) {
+      setQuestionIndex(nextIndex);
+      setBubbles((prev) => [
+        ...prev,
+        { id: `q${nextIndex}`, role: 'mentor', text: INTERVIEW_QUESTIONS[nextIndex].question },
+      ]);
+    } else {
+      void finishInterview(finalEntries, currentUser);
+    }
+  };
+
+  const handleAnswer = async () => {
+    const text = input.trim();
+    if (!text || busy || !user) return;
+    setBusy(true);
+    setInput('');
+    const current = INTERVIEW_QUESTIONS[questionIndex];
+    const questionText = pendingFollowup ?? current.question;
+    setBubbles((prev) => [...prev, { id: `a-${Date.now()}`, role: 'user', text }]);
+    const newEntry: InterviewEntry = { area: current.area, question: questionText, answer: text };
+    const nextEntries = [...entries, newEntry];
+    setEntries(nextEntries);
+
+    try {
+      if (pendingFollowup) {
+        // Follow-up answered — move on unconditionally (max one follow-up per area).
+        setPendingFollowup(null);
+        askNext(questionIndex + 1, nextEntries, user);
+      } else {
+        let followup: string | null = null;
+        try {
+          const idToken = await user.getIdToken();
+          const res = await fetch('/api/coach/followup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+            body: JSON.stringify({ area: current.area, question: current.question, answer: text }),
+          });
+          if (res.ok) followup = (await res.json()).followup;
+        } catch (error) {
+          console.error('Follow-up fetch failed (skipping):', error);
+        }
+        if (followup) {
+          setPendingFollowup(followup);
+          setBubbles((prev) => [...prev, { id: `f-${Date.now()}`, role: 'mentor', text: followup as string }]);
+        } else {
+          askNext(questionIndex + 1, nextEntries, user);
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void handleAnswer();
+    }
+  };
+
+  const progress = Math.min(questionIndex, INTERVIEW_QUESTIONS.length);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
+
+      <header className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div>
+          <p className="font-serif text-base font-semibold text-foreground">Meet your mentor</p>
+          {phase === 'interview' && (
+            <p className="text-xs text-text-muted">{progress} of {INTERVIEW_QUESTIONS.length} areas</p>
+          )}
+        </div>
+        <Button variant="outline" size="sm" onClick={() => router.push('/today')}>
+          Skip for now
+        </Button>
+      </header>
+
+      {phase === 'interview' && (
+        <>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="mx-auto flex max-w-xl flex-col gap-3">
+              {bubbles.map((b) => (
+                <div key={b.id} className={`flex ${b.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={[
+                      'max-w-[85%] whitespace-pre-wrap rounded-lg px-4 py-2.5 text-sm leading-relaxed',
+                      b.role === 'user'
+                        ? 'rounded-br-xs bg-primary text-primary-foreground'
+                        : 'rounded-bl-xs border border-border bg-surface-sunken text-text-body',
+                    ].join(' ')}
+                  >
+                    {b.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-border px-4 py-3.5">
+            <div className="mx-auto flex max-w-xl items-end gap-2.5">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Answer in your own words…"
+                className="min-h-[44px] resize-none"
+                rows={1}
+                disabled={busy || !user}
+              />
+              <Button onClick={() => void handleAnswer()} variant="primary" size="icon" disabled={busy || !input.trim()} aria-label="Send answer">
+                <Send className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {phase === 'seeding' && (
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className="text-center">
+            <Sparkles className="mx-auto mb-4 size-8 animate-pulse text-accent" />
+            <p className="font-serif text-lg font-semibold text-foreground">Building your picture…</p>
+            <p className="mt-1 text-sm text-text-muted">Turning what you shared into your mentor&apos;s memory.</p>
+          </div>
+        </div>
+      )}
+
+      {phase === 'playback' && seededModel && (
+        <div className="flex-1 overflow-y-auto px-4 py-8">
+          <div className="mx-auto max-w-xl">
+            <h2 className="mb-1 font-serif text-2xl font-semibold text-foreground">Here&apos;s my picture of you</h2>
+            <p className="mb-6 text-sm text-text-muted">Correct anything — your edits always win.</p>
+            {seededModel.profile.identity && (
+              <p className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-sm text-text-body">
+                {seededModel.profile.identity}
+              </p>
+            )}
+            <div className="mb-8 space-y-3">
+              {LIFE_AREAS.filter((a) => seededModel.areas[a].status).map((a) => (
+                <div key={a} className="rounded-lg border border-border bg-surface px-4 py-3">
+                  <p className="mb-0.5 font-mono text-xs uppercase tracking-[0.08em] text-accent">{AREA_LABEL[a]}</p>
+                  <p className="text-sm text-text-body">{seededModel.areas[a].status}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="primary" className="flex-1" onClick={() => router.push('/today')}>
+                Looks right — let&apos;s go <ArrowRight className="size-4" />
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => router.push('/brain')}>
+                <Pencil className="size-4" /> Fix something
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {phase === 'fallback' && (
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className="max-w-md text-center">
+            <p className="mb-2 font-serif text-lg font-semibold text-foreground">I&apos;ll learn as we go</p>
+            <p className="mb-6 text-sm text-text-muted">
+              I couldn&apos;t finish building your picture just now, but everything you shared is safe —
+              I&apos;ll pick it up from our conversations.
+            </p>
+            <Button variant="primary" onClick={() => router.push('/today')}>
+              Start your first check-in <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
