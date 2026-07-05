@@ -2,12 +2,24 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * Card — level-1 raised surface (elevation ladder).
+ * Default: shadow-sm (level 1).
+ * `interactive` variant: hover shadow-md + -translate-y-px (150ms).
+ * Semantic tokens only; no raw oat/coffee values.
+ */
+function Card({
+  className,
+  interactive = false,
+  ...props
+}: React.ComponentProps<"div"> & { interactive?: boolean }) {
   return (
     <div
       data-slot="card"
       className={cn(
         "bg-card text-card-foreground flex flex-col gap-6 rounded-lg border py-6 shadow-sm",
+        interactive &&
+          "transition-[box-shadow,transform] duration-fast ease-standard cursor-pointer hover:shadow-md hover:-translate-y-px",
         className
       )}
       {...props}

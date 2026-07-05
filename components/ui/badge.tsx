@@ -19,6 +19,7 @@ const badgeVariants = cva(
         success: "bg-success-soft text-sage-500 border-sage-500/25",
         warning: "bg-warning-soft text-amber-500 border-amber-500/30",
         destructive: "bg-destructive-soft text-clay-600 border-clay-500/25",
+        gold: "bg-gold-50 text-gold-500 border-gold-500/30",
       },
       variant: {
         soft: "",
@@ -32,6 +33,7 @@ const badgeVariants = cva(
       { variant: "solid", tone: "success", className: "bg-success" },
       { variant: "solid", tone: "warning", className: "bg-warning" },
       { variant: "solid", tone: "destructive", className: "bg-destructive" },
+      { variant: "solid", tone: "gold", className: "bg-gold-500" },
     ],
     defaultVariants: {
       tone: "neutral",

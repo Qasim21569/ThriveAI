@@ -42,8 +42,12 @@
   --terracotta-50: 248 233 224;
   --terracotta-100: 239 210 194;
   --terracotta-400: 210 138 99;
-  --terracotta-500: 192 105 63;
-  --terracotta-600: 169 84 46;
+  --terracotta-500: 176 88 48;
+  --terracotta-600: 150 70 38;
+
+  /* --- Gold (streak / celebration) --- */
+  --gold-500: 178 128 26;
+  --gold-50: 246 237 214;
 
   /* --- Semantic status hues --- */
   --sage-500: 110 124 90;
@@ -127,11 +131,13 @@
   --shadow-sm: 0 1px 3px rgba(58, 42, 26, 0.06), 0 1px 2px rgba(58, 42, 26, 0.04);
   --shadow-md: 0 4px 10px rgba(58, 42, 26, 0.07), 0 1px 3px rgba(58, 42, 26, 0.05);
   --shadow-lg: 0 10px 24px rgba(58, 42, 26, 0.08), 0 2px 6px rgba(58, 42, 26, 0.05);
+  --shadow-xl: 0 20px 48px rgba(58, 42, 26, 0.12), 0 4px 12px rgba(58, 42, 26, 0.06);
 
   /* --- Motion: minimal, fades on state change only --- */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --duration-fast: 150ms;
   --duration-base: 180ms;
+  --duration-slow: 280ms;
 }
 
 @layer base {
@@ -186,6 +192,30 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgb(var(--text-muted));
+  }
+
+  /**
+   * Mentor's voice — applied to everything the AI knows or says about the user.
+   * Serif italic, ink-700 text. Recognizable as "the mentor's hand."
+   */
+  .mentor-voice {
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: rgb(var(--ink-700));
+    line-height: 1.6;
+  }
+
+  /**
+   * Mentor's voice with the 2px accent left rule — used in block contexts
+   * (playback lines, area statuses, reactions).
+   */
+  .mentor-voice-rule {
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: rgb(var(--ink-700));
+    line-height: 1.6;
+    border-left: 2px solid rgb(var(--accent));
+    padding-left: 0.875rem;
   }
 }
 

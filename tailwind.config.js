@@ -92,6 +92,10 @@ module.exports = {
           50: withAlpha('--terracotta-50'), 100: withAlpha('--terracotta-100'),
           400: withAlpha('--terracotta-400'), 500: withAlpha('--terracotta-500'), 600: withAlpha('--terracotta-600'),
         },
+        gold: {
+          50: withAlpha('--gold-50'),
+          500: withAlpha('--gold-500'),
+        },
         sage: { 50: withAlpha('--sage-50'), 500: withAlpha('--sage-500') },
         amber: { 50: withAlpha('--amber-50'), 500: withAlpha('--amber-500') },
         clay: { 50: withAlpha('--clay-50'), 500: withAlpha('--clay-500'), 600: withAlpha('--clay-600') },
@@ -119,6 +123,7 @@ module.exports = {
         DEFAULT: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
         none: 'none',
       },
       maxWidth: {
@@ -131,6 +136,7 @@ module.exports = {
       transitionDuration: {
         fast: '150ms',
         base: '180ms',
+        slow: '280ms',
       },
       keyframes: {
         'fade-in': {
