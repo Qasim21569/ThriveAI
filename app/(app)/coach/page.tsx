@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, CheckCircle2, RotateCcw } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import type { User } from 'firebase/auth';
 import { saveMessage, getRecentMessages, type ChatMessage } from '@/lib/firebase/messages';
@@ -14,6 +15,8 @@ import { logCheckinArgsSchema, extractToolCall } from '@/lib/coach/tools';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { FadeIn } from '@/components/motion/fade-in';
+import { MentorVoice } from '@/components/ui/mentor-voice';
 
 const SUGGESTED_PROMPTS = [
   'Here\'s how my day went…',
@@ -24,19 +27,47 @@ const SUGGESTED_PROMPTS = [
 
 const ERROR_TEXT = "Sorry, I couldn't respond just now. Please try again.";
 
-function ChatBubble({ role, content, isAction }: { role: 'user' | 'assistant'; content: string; isAction?: boolean }) {
-  const me = role === 'user';
+/**
+ * ActionChip — the "✓ Logged" tool-call confirmation bubble.
+ *
+ * Renders with a single 300ms gold background pulse on mount (sanctioned per
+ * motion-guidelines: "Chat: tool-call confirmation chip — FadeIn + one 300ms
+ * gold background pulse"). Uses gold tokens (gold-50 fill, gold-500 text)
+ * per theme-decision: "gold = celebration/logging moments".
+ *
+ * Only opacity/transform animate in Framer Motion; the backgroundColor pulse
+ * is a one-shot keyframe (<300ms) on a color property — sanctioned exception
+ * (motion guidelines allow color transitions ≤180ms for CSS; this inline
+ * animate sequence is equivalent in intent and fires exactly once).
+ */
+function ActionChip({ content }: { content: string }) {
+  return (
+    <div className="flex justify-start">
+      {/* Motion rule: FadeIn is the outer entrance; the inner pulse animates
+          backgroundColor from gold-50 to transparent once over 300ms. */}
+      <motion.div
+        initial={{ opacity: 0, y: 6, backgroundColor: 'rgb(246 237 214)' }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          backgroundColor: ['rgb(246 237 214)', 'rgb(246 237 214)', 'rgba(246,237,214,0)'],
+        }}
+        transition={{
+          opacity: { duration: 0.28, ease: [0.4, 0, 0.2, 1] },
+          y: { duration: 0.28, ease: [0.4, 0, 0.2, 1] },
+          backgroundColor: { duration: 0.3, ease: [0.4, 0, 0.2, 1], times: [0, 0.5, 1] },
+        }}
+        className="flex max-w-[80%] items-center gap-2 rounded-lg border border-gold-500/30 bg-gold-50 px-4 py-2.5 text-sm text-gold-500"
+      >
+        <CheckCircle2 className="size-4 flex-shrink-0" />
+        <span>{content}</span>
+      </motion.div>
+    </div>
+  );
+}
 
-  if (isAction) {
-    return (
-      <div className="flex justify-start">
-        <div className="flex max-w-[80%] items-center gap-2 rounded-lg border border-success/30 bg-success-soft px-4 py-2.5 text-sm text-success">
-          <CheckCircle2 className="size-4 flex-shrink-0" />
-          <span>{content}</span>
-        </div>
-      </div>
-    );
-  }
+function ChatBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
+  const me = role === 'user';
 
   return (
     <div className={`flex ${me ? 'justify-end' : 'justify-start'}`}>
@@ -244,42 +275,68 @@ export default function CoachPage() {
     <div className="flex h-[calc(100vh-61px)] flex-col bg-background">
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
+      {/* Header — strapline rendered in MentorVoice per theme-decision:
+          "the mentor's voice" signature device for everything the AI knows about the user. */}
       <div className="border-b border-border px-4 py-3.5">
         <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Mentor</h1>
         <p className="text-xs text-text-muted">
-          {hasModel ? 'Knows your goals, history, and whole picture' : 'Getting to know you — just start talking'}
+          <MentorVoice>
+            {hasModel ? 'Knows your goals, history, and whole picture' : 'Getting to know you — just start talking'}
+          </MentorVoice>
         </p>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
+          {/* Empty state — single FadeIn, no looping animation (motion guidelines). */}
           {messages.length === 0 && (
-            <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
-              <p className="mb-4 text-sm text-text-muted">
-                Say hello, or try one of these to get started:
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {SUGGESTED_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => handleSend(prompt)}
-                    disabled={isStreaming}
-                    className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-sm text-text-body transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
-                  >
-                    {prompt}
-                  </button>
-                ))}
+            <FadeIn>
+              <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
+                <p className="mb-4 text-sm text-text-muted">
+                  Say hello, or try one of these to get started:
+                </p>
+                {/* Suggested-prompt chips at sunken elevation with designed hover/focus-visible states.
+                    Transition ≤150ms (--duration-fast) per elevation ladder + motion guidelines. */}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {SUGGESTED_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => handleSend(prompt)}
+                      disabled={isStreaming}
+                      className={[
+                        'rounded-full border border-border bg-surface-sunken px-3.5 py-1.5 text-sm text-text-body',
+                        'transition-[border-color,color,box-shadow] duration-[150ms] ease-standard',
+                        'hover:border-accent hover:text-accent',
+                        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:border-accent',
+                        'active:scale-[0.98]',
+                        'disabled:opacity-50 disabled:pointer-events-none',
+                        'min-h-[44px]',
+                      ].join(' ')}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            </FadeIn>
           )}
-          {messages.map((m) => (
-            <ChatBubble
-              key={m.id}
-              role={m.role}
-              content={m.content}
-              isAction={m.role === 'assistant' && m.content.includes('✓ Logged')}
-            />
-          ))}
+
+          {/* Message list — each bubble FadeIns once on mount (keyed by stable m.id).
+              Streaming updates content via setMessages map (no key change → no remount →
+              the FadeIn does not re-fire during streaming). Text inside is never animated. */}
+          {messages.map((m) => {
+            const isAction = m.role === 'assistant' && m.content.includes('✓ Logged');
+            return (
+              <FadeIn key={m.id}>
+                {isAction ? (
+                  <ActionChip content={m.content} />
+                ) : (
+                  <ChatBubble role={m.role} content={m.content} />
+                )}
+              </FadeIn>
+            );
+          })}
+
           {failedRetry && (
             <div className="flex justify-start">
               <Button variant="outline" size="sm" onClick={handleRetry} disabled={isStreaming}>
@@ -290,7 +347,8 @@ export default function CoachPage() {
         </div>
       </div>
 
-      <div className="border-t border-border px-4 py-3.5">
+      {/* Input area at sunken elevation (−1 on the ladder) per theme-decision elevation rules. */}
+      <div className="border-t border-border bg-surface-sunken px-4 py-3.5">
         <div className="mx-auto flex max-w-2xl items-end gap-2.5">
           <Textarea
             ref={inputRef}
