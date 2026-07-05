@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Flame, Send, CheckCircle2, MessageCircle, Brain } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import type { User } from 'firebase/auth';
@@ -17,6 +18,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { MentorVoice } from '@/components/ui/mentor-voice';
+import { FadeIn } from '@/components/motion/fade-in';
 
 const FALLBACK_REACTION = 'Logged. Showing up daily is the whole game — see you tomorrow.';
 
@@ -121,40 +125,70 @@ export default function TodayPage() {
       <AuthModal open={showAuthModal} onClose={() => router.push('/')} onSuccess={() => setShowAuthModal(false)} />
 
       <div className="mx-auto max-w-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <span className="font-mono text-xs uppercase tracking-[0.08em] text-accent">Today</span>
-            <h1 className="mt-1 font-serif text-3xl font-semibold text-foreground">Daily check-in</h1>
-          </div>
+        {/* PageHeader with streak chip as right-aligned children */}
+        <PageHeader
+          eyebrow="Today"
+          title="Daily check-in"
+          className="mb-6"
+        >
+          {/* Streak chip — gold tokens (celebration hue, not interaction accent) */}
           <div
-            className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5"
+            className="flex items-center gap-1.5 rounded-full border border-gold-500/30 bg-gold-50 px-3 py-1.5"
             aria-label={`${streak} day streak`}
           >
-            <Flame className="size-4 text-accent" />
-            <span className="text-sm font-semibold text-foreground">{streak}</span>
+            {/* Sanctioned inline motion element: flame does one 1.06 scale pulse on streak increment.
+                Keyed on streak so it re-mounts (and re-animates) each time the value changes.
+                motion.span is the right tool here per motion-guidelines "streak increment" entry. */}
+            <motion.span
+              key={`flame-${streak}`}
+              animate={{ scale: [1, 1.06, 1] }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              className="flex items-center"
+            >
+              <Flame className="size-4 text-gold-500" />
+            </motion.span>
+            {/* Sanctioned inline motion element: number ticks with 200ms y-flip on streak increment.
+                Keyed on streak value so each new number flips in from below, then settles.
+                motion.span is the right tool here per motion-guidelines "streak increment" entry. */}
+            <motion.span
+              key={`count-${streak}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              className="text-sm font-semibold text-gold-500"
+            >
+              {streak}
+            </motion.span>
           </div>
-        </div>
+        </PageHeader>
 
         {reaction ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="mb-4 flex items-center gap-2 text-success">
-                <CheckCircle2 className="size-5" />
-                <span className="text-sm font-medium">Logged for today</span>
-              </div>
-              <p className="mb-6 text-sm leading-relaxed text-text-body">{reaction}</p>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button asChild variant="outline" className="flex-1">
-                  <Link href="/coach"><MessageCircle className="size-4" /> Talk it through</Link>
-                </Button>
-                <Button asChild variant="outline" className="flex-1">
-                  <Link href="/brain"><Brain className="size-4" /> See your brain</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          // Logged-state card enters with FadeIn
+          <FadeIn>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="mb-4 flex items-center gap-2 text-success">
+                  <CheckCircle2 className="size-5" />
+                  <span className="text-sm font-medium">Logged for today</span>
+                </div>
+                {/* Mentor reaction in MentorVoice rule variant — the mentor's hand */}
+                <MentorVoice rule className="mb-6 text-sm">
+                  {reaction}
+                </MentorVoice>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link href="/coach"><MessageCircle className="size-4" /> Talk it through</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link href="/brain"><Brain className="size-4" /> See your brain</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
         ) : (
           <>
+            {/* Prompt chips at sunken elevation (surface-sunken well per elevation ladder) */}
             <div className="mb-4 space-y-2">
               {prompts.map((p) => (
                 <p key={p} className="rounded-lg border border-border bg-surface-sunken px-4 py-2.5 text-sm text-text-body">
