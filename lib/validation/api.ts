@@ -86,7 +86,16 @@ export const extractRequestSchema = z
   })
   .passthrough();
 
+// Sent by the Today page to /api/coach/react after a daily check-in is saved
+export const reactRequestSchema = z
+  .object({
+    checkinText: nonEmpty.max(4000),
+    contextBlock: z.string().max(12_000).optional(),
+  })
+  .passthrough();
+
 export type FitnessRequest = z.infer<typeof fitnessRequestSchema>;
 export type MentalRequest = z.infer<typeof mentalRequestSchema>;
 export type CoachChatRequest = z.infer<typeof coachChatRequestSchema>;
 export type ExtractRequest = z.infer<typeof extractRequestSchema>;
+export type ReactRequest = z.infer<typeof reactRequestSchema>;
