@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LIFE_AREAS } from '@/lib/lifemodel/types';
 
 /**
  * Request-body schemas for the AI API routes. These validate the *shape* of
@@ -94,8 +95,18 @@ export const reactRequestSchema = z
   })
   .passthrough();
 
+// Sent by the onboarding interview to /api/coach/followup
+export const followupRequestSchema = z
+  .object({
+    area: z.enum(LIFE_AREAS),
+    question: nonEmpty.max(500),
+    answer: nonEmpty.max(4000),
+  })
+  .passthrough();
+
 export type FitnessRequest = z.infer<typeof fitnessRequestSchema>;
 export type MentalRequest = z.infer<typeof mentalRequestSchema>;
 export type CoachChatRequest = z.infer<typeof coachChatRequestSchema>;
 export type ExtractRequest = z.infer<typeof extractRequestSchema>;
 export type ReactRequest = z.infer<typeof reactRequestSchema>;
+export type FollowupRequest = z.infer<typeof followupRequestSchema>;
