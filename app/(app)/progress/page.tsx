@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dumbbell, Smile, StickyNote } from 'lucide-react';
+import { Dumbbell, Smile, StickyNote, CalendarCheck } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
 import AuthModal from '@/components/auth/AuthModal';
@@ -14,12 +14,14 @@ const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>
   workout: Dumbbell,
   mood: Smile,
   note: StickyNote,
+  daily: CalendarCheck,
 };
 
 const TYPE_TONE: Record<CheckinType, 'primary' | 'accent' | 'neutral'> = {
   workout: 'primary',
   mood: 'accent',
   note: 'neutral',
+  daily: 'primary',
 };
 
 function formatRelative(iso: string): string {

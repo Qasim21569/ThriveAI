@@ -10,7 +10,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 
-export type CheckinType = 'workout' | 'mood' | 'note';
+export type CheckinType = 'workout' | 'mood' | 'note' | 'daily';
 
 export interface Checkin {
   id: string;

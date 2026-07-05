@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote } from 'lucide-react';
+import { MessageCircle, Dumbbell, Plus, ArrowRight, Activity, Smile, StickyNote, CalendarCheck } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { getUserPlans, pickActivePlan, type PlanSummary } from '@/lib/firebase/plans';
 import { getRecentCheckins, type Checkin, type CheckinType } from '@/lib/firebase/checkins';
@@ -17,6 +17,7 @@ const TYPE_ICON: Record<CheckinType, React.ComponentType<{ className?: string }>
   workout: Dumbbell,
   mood: Smile,
   note: StickyNote,
+  daily: CalendarCheck,
 };
 
 function DashboardSkeleton() {
