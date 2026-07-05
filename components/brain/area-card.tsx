@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Pencil, Check, X, Plus, CircleCheck, CircleDot } from 'lucide-react';
 import type { AreaState, LifeAreaId } from '@/lib/lifemodel/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,10 +21,12 @@ export function AreaCard({
   areaId,
   area,
   onSave,
+  action,
 }: {
   areaId: LifeAreaId;
   area: AreaState;
   onSave: (a: AreaState) => Promise<void>;
+  action?: { label: string; href: string };
 }) {
   const [editing, setEditing] = useState(false);
   const [draftStatus, setDraftStatus] = useState(area.status);
@@ -85,6 +88,11 @@ export function AreaCard({
           <div className="flex items-center gap-2">
             <CardTitle>{AREA_LABEL[areaId]}</CardTitle>
             {openThreads.length > 0 && <Badge tone="primary">{openThreads.length} open</Badge>}
+            {action && (
+              <Link href={action.href} className="text-xs text-accent hover:underline">
+                {action.label}
+              </Link>
+            )}
           </div>
           {editing ? (
             <div className="flex gap-1.5">

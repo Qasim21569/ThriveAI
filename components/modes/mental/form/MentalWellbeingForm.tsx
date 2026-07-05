@@ -24,6 +24,9 @@ import { FormProgress } from './FormProgress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { savePlan } from '@/lib/firebase/plans';
+import { runExtraction } from '@/lib/coach/extraction-client';
+import { getLifeModel } from '@/lib/firebase/lifeModel';
+import { emptyLifeModel } from '@/lib/lifemodel/types';
 
 // Shared warm styling for native text controls (matches Input).
 const nativeInputClass =
@@ -267,6 +270,19 @@ export function MentalWellbeingForm() {
 
       if (user) {
         const planId = await savePlan(user.uid, 'mental', 'Mental Wellbeing Assessment', data.assessment);
+        // Distill the assessment into the brain's mental area (fire-and-forget).
+        void (async () => {
+          try {
+            const idToken = await user.getIdToken();
+            const model = (await getLifeModel(user.uid)) ?? emptyLifeModel();
+            const text =
+              'The user just completed a mental wellbeing assessment. Key findings (JSON): ' +
+              JSON.stringify(data.assessment).slice(0, 3000);
+            await runExtraction(user.uid, idToken, model, text);
+          } catch (error) {
+            console.error('Mental assessment distillation failed:', error);
+          }
+        })();
         setTimeout(() => router.push(`/mental/report/${planId}`), 1000);
       } else {
         // Not signed in — fall back to localStorage + the non-permanent report page

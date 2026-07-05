@@ -30,6 +30,10 @@ import {
 import { FormProgress } from './FormProgress';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { savePlan } from '@/lib/firebase/plans';
+import { runExtraction } from '@/lib/coach/extraction-client';
+import { getLifeModel } from '@/lib/firebase/lifeModel';
+import { emptyLifeModel } from '@/lib/lifemodel/types';
+import { summarizePlanForPrompt } from '@/lib/coach/context';
 
 // Shared warm styling for native <select> controls (matches Input).
 const selectClass =
@@ -220,6 +224,21 @@ export function FitnessForm() {
       setGenerationStep('saving');
       if (user) {
         const planId = await savePlan(user.uid, 'fitness', 'Fitness Plan', planData.plan);
+        // Distill the new plan into the brain's health area (fire-and-forget —
+        // plan save already succeeded; a failed distillation self-heals on the
+        // next extraction).
+        void (async () => {
+          try {
+            const idToken = await user.getIdToken();
+            const model = (await getLifeModel(user.uid)) ?? emptyLifeModel();
+            const text =
+              'The user just completed a fitness assessment and generated a new fitness plan. ' +
+              `Plan summary: ${summarizePlanForPrompt('fitness', planData.plan)}`;
+            await runExtraction(user.uid, idToken, model, text);
+          } catch (error) {
+            console.error('Fitness plan distillation failed:', error);
+          }
+        })();
         setGenerationStep('complete');
         toast.success('Your fitness plan is ready!');
         setTimeout(() => router.push(`/fitness/plan/${planId}`), 600);

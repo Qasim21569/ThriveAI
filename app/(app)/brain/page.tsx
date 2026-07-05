@@ -115,7 +115,19 @@ export default function BrainPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               {LIFE_AREAS.map((areaId) => (
-                <AreaCard key={areaId} areaId={areaId} area={model.areas[areaId]} onSave={saveArea(areaId)} />
+                <AreaCard
+                  key={areaId}
+                  areaId={areaId}
+                  area={model.areas[areaId]}
+                  onSave={saveArea(areaId)}
+                  action={
+                    areaId === 'health'
+                      ? { label: 'Fitness assessment →', href: '/fitness/form' }
+                      : areaId === 'mental'
+                        ? { label: 'Wellbeing check →', href: '/mental/form' }
+                        : undefined
+                  }
+                />
               ))}
             </div>
 
