@@ -166,7 +166,8 @@ export default function CoachPage() {
         const turnText = `User: ${userText}\nMentor: ${finalText}`;
         extractionChainRef.current = extractionChainRef.current.then(async () => {
           if (!lifeModelRef.current) return;
-          const outcome = await runExtraction(user.uid, idToken, lifeModelRef.current, turnText);
+          const freshToken = await user.getIdToken();
+          const outcome = await runExtraction(user.uid, freshToken, lifeModelRef.current, turnText);
           if (!outcome) return;
           lifeModelRef.current = outcome.model;
           recentEventsRef.current = [...outcome.newEvents, ...recentEventsRef.current].slice(0, 15);

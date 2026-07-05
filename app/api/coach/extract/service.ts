@@ -36,7 +36,7 @@ Rules:
  * An empty optional is semantically absent, so strip these before schema
  * validation rather than failing the whole extraction on them.
  */
-function stripEmptyOptionals(raw: unknown): unknown {
+export function stripEmptyOptionals(raw: unknown): unknown {
   if (!raw || typeof raw !== 'object') return raw;
   const diff = raw as Record<string, unknown>;
 
@@ -45,6 +45,16 @@ function stripEmptyOptionals(raw: unknown): unknown {
       if (!area || typeof area !== 'object') continue;
       for (const key of ['status', 'summary']) {
         if (typeof area[key] === 'string' && (area[key] as string).trim() === '') delete area[key];
+      }
+      if (Array.isArray(area.addThreads)) {
+        area.addThreads = (area.addThreads as unknown[]).filter(
+          (t) => typeof t === 'string' && t.trim() !== '',
+        );
+      }
+      if (Array.isArray(area.addGoals)) {
+        area.addGoals = (area.addGoals as Record<string, unknown>[]).filter(
+          (g) => typeof g?.text === 'string' && (g.text as string).trim() !== '',
+        );
       }
     }
   }

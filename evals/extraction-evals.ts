@@ -49,7 +49,7 @@ const scenarios: Scenario[] = [
         : { pass: false, reason: `career untouched: ${JSON.stringify(diff)}` },
   },
   {
-    name: 'cross-domain check-in touches both areas',
+    name: 'cross-domain check-in touches health or mental',
     conversationText:
       'User: Barely slept 3 hours last night worrying about the interview, and I skipped the gym again.',
     assert: (diff) => {

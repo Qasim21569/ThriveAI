@@ -53,8 +53,8 @@ export function summarizePlanForPrompt(
 // Life Model context (Plan 1: The Brain).
 // ---------------------------------------------------------------------------
 
-// Per-layer character budgets (~4 chars/token, same approximation as BUDGET
-// above). Total worst case ≈ 4,000 chars ≈ 1,000 tokens of user context.
+// Per-layer character budgets (~4 chars/token approximation).
+// Total worst case ≈ 4,000 chars ≈ 1,000 tokens of user context.
 const MENTOR_BUDGET = {
   coachingStyle: 300,
   profile: 500,
@@ -176,7 +176,13 @@ export async function buildMentorContext(uid: string, idToken: string): Promise<
   let model: LifeModel | null = null;
   try {
     model = await getLifeModel(uid);
-    if (!model) model = await seedLifeModelFromHistory(uid, idToken);
+    if (!model) {
+      try {
+        model = await seedLifeModelFromHistory(uid, idToken);
+      } catch (seedError) {
+        console.error('Failed to seed Life Model from history:', seedError);
+      }
+    }
   } catch (error) {
     console.error('Failed to load Life Model:', error);
   }
