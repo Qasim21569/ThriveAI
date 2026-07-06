@@ -28,3 +28,8 @@ Keyboard-only pass on auth → today → brain. OS reduced-motion pass.
 ### Owner findings
 
 - (append here)
+
+### Owner findings (v2 round)
+
+- v1 look rejected (too subtle, fonts unchanged, landing unclear) -> v2 revision round shipped: SaaS-neutral + dark, Inter/Instrument Serif, explainer landing, welcome flow, theme-adaptive logo, em-dash ban in AI outputs.
+- Owner visual pass on prod build (light + dark, incl. new logo): PASSED 2026-07-06.
