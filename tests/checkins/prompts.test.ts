@@ -5,7 +5,7 @@ import { buildDailyPrompts } from '@/lib/checkins/prompts';
 describe('buildDailyPrompts', () => {
   it('returns only the generic prompt for a null or empty model', () => {
     expect(buildDailyPrompts(null)).toEqual([
-      'How was your day — energy, mood, anything notable?',
+      'How was your day? Energy, mood, anything notable.',
     ]);
     expect(buildDailyPrompts(emptyLifeModel())).toHaveLength(1);
   });

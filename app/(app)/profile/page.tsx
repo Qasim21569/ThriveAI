@@ -77,7 +77,7 @@ export default function ProfilePage() {
 
   // Auth state
   const [uid, setUid] = useState<string | null>(null);
-  const [providerId, setProviderId] = useState<string>('password');
+  const [providerId, setProviderId] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
 
   // Identity section
@@ -435,7 +435,7 @@ export default function ProfilePage() {
                 <div className="rounded-md border border-border bg-surface-sunken p-4 text-center">
                   <p className="font-serif text-2xl font-semibold text-foreground">
                     {checkinCount === null
-                      ? '--'
+                      ? '…'
                       : checkinCount >= 365
                       ? '365+'
                       : checkinCount}
@@ -444,14 +444,14 @@ export default function ProfilePage() {
                 </div>
                 <div className="rounded-md border border-border bg-surface-sunken p-4 text-center">
                   <p className="font-serif text-2xl font-semibold text-foreground">
-                    {planCount === null ? '--' : planCount}
+                    {planCount === null ? '…' : planCount}
                   </p>
                   <p className="mt-0.5 text-xs text-text-muted">Plans</p>
                 </div>
                 <div className="rounded-md border border-border bg-surface-sunken p-4 text-center">
                   <p className="font-serif text-2xl font-semibold text-foreground">
                     {eventCount === null
-                      ? '--'
+                      ? '…'
                       : eventCount >= 100
                       ? '100+'
                       : eventCount}
@@ -466,7 +466,7 @@ export default function ProfilePage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">Reset life model</p>
                     <p className="mt-0.5 text-sm text-text-muted">
-                      Clears what the AI has learned about you -- goals, area summaries, and events.
+                      Clears what the AI has learned about you: goals, area summaries, and events.
                       Your check-ins and plans are kept so the brain can re-learn from them.
                     </p>
                   </div>
@@ -639,7 +639,7 @@ export default function ProfilePage() {
             </div>
             <p className="text-sm text-text-muted">
               This permanently clears the AI memory of your goals, area summaries, and events.
-              Your check-ins and plans are untouched -- the brain re-learns from them the next
+              Your check-ins and plans are untouched. The brain re-learns from them the next
               time you chat.
             </p>
             <p className="mt-4 text-sm text-text-muted">

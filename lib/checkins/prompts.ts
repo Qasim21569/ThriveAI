@@ -1,6 +1,6 @@
 import { LIFE_AREAS, type LifeModel } from '@/lib/lifemodel/types';
 
-const GENERIC_PROMPT = 'How was your day — energy, mood, anything notable?';
+const GENERIC_PROMPT = 'How was your day? Energy, mood, anything notable.';
 
 /**
  * Template-based adaptive prompts from the Life Model's open loops.
