@@ -69,7 +69,7 @@ export function FormProgress({ currentStage, setStage, validStages }: FormProgre
                   status === 'active'
                     ? 'border-transparent bg-primary text-primary-foreground shadow-sm'
                     : status === 'completed'
-                    ? 'border-transparent bg-coffee-300 text-primary-foreground'
+                    ? 'border-transparent bg-muted-foreground text-primary-foreground'
                     : 'border-border bg-surface-sunken text-text-muted',
                   clickable ? 'cursor-pointer' : 'cursor-not-allowed',
                 ].join(' ')}

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
  *   - Mentor reactions on /today
  *   - "Knows your goals…" straplines in chat
  *
- * `rule={false}` (default): inline span with .mentor-voice (serif italic, ink-700)
+ * `rule={false}` (default): inline span with .mentor-voice (serif italic, text-body)
  * `rule={true}`: blockquote with .mentor-voice-rule (adds 2px accent left border + padding)
  *
  * When it's about the user, it's in the mentor's hand.

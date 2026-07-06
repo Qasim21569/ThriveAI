@@ -296,7 +296,7 @@ export default function ProfilePage() {
       {/* Delete confirmation modal — floating elevation (shadow-xl) */}
       {confirmDelete && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => setConfirmDelete(null)}

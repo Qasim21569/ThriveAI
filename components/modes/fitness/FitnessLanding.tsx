@@ -69,7 +69,7 @@ const FitnessLanding = () => {
         <div className="grid gap-4">
           {STEPS.map((step, i) => (
             <Card key={step.title} className="flex-row items-start gap-5 p-6 md:p-7">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft font-mono text-lg font-semibold text-coffee-700">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft font-mono text-lg font-semibold text-primary">
                 {i + 1}
               </div>
               <div>

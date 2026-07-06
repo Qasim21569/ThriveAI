@@ -12,9 +12,9 @@ const alertVariants = cva(
     variants: {
       tone: {
         info: "bg-surface-raised border-border-strong text-foreground [&>svg]:text-text-muted",
-        success: "bg-success-soft border-sage-500/25 text-sage-500 [&>svg]:text-success",
-        warning: "bg-warning-soft border-amber-500/30 text-amber-500 [&>svg]:text-warning",
-        destructive: "bg-destructive-soft border-clay-500/25 text-clay-600 [&>svg]:text-destructive",
+        success: "bg-success-soft border-success/25 text-success [&>svg]:text-success",
+        warning: "bg-warning-soft border-warning/30 text-warning [&>svg]:text-warning",
+        destructive: "bg-destructive-soft border-destructive/25 text-destructive [&>svg]:text-destructive",
       },
     },
     defaultVariants: { tone: "info" },

@@ -14,11 +14,11 @@ const badgeVariants = cva(
     variants: {
       tone: {
         neutral: "bg-muted text-text-body border-border",
-        primary: "bg-primary-soft text-coffee-700 border-coffee-100",
-        accent: "bg-accent-soft text-terracotta-600 border-terracotta-100",
-        success: "bg-success-soft text-sage-500 border-sage-500/25",
-        warning: "bg-warning-soft text-amber-500 border-amber-500/30",
-        destructive: "bg-destructive-soft text-clay-600 border-clay-500/25",
+        primary: "bg-primary-soft text-primary border-primary/20",
+        accent: "bg-accent-soft text-accent border-accent/20",
+        success: "bg-success-soft text-success border-success/25",
+        warning: "bg-warning-soft text-warning border-warning/30",
+        destructive: "bg-destructive-soft text-destructive border-destructive/25",
         gold: "bg-gold-50 text-gold-500 border-gold-500/30",
       },
       variant: {
@@ -27,7 +27,7 @@ const badgeVariants = cva(
       },
     },
     compoundVariants: [
-      { variant: "solid", tone: "neutral", className: "bg-ink-700" },
+      { variant: "solid", tone: "neutral", className: "bg-foreground" },
       { variant: "solid", tone: "primary", className: "bg-primary" },
       { variant: "solid", tone: "accent", className: "bg-accent" },
       { variant: "solid", tone: "success", className: "bg-success" },

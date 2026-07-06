@@ -27,7 +27,7 @@ const AuthModal = ({ open = true, onClose, onSuccess, message }: AuthModalProps)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
@@ -46,7 +46,7 @@ const AuthModal = ({ open = true, onClose, onSuccess, message }: AuthModalProps)
         </button>
 
         {message && (
-          <div className="mb-5 rounded-md border border-accent/25 bg-accent-soft px-4 py-3 text-center text-sm text-terracotta-600">
+          <div className="mb-5 rounded-md border border-accent/25 bg-accent-soft px-4 py-3 text-center text-sm text-accent">
             {message}
           </div>
         )}

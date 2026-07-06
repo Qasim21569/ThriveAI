@@ -72,6 +72,8 @@ module.exports = {
           DEFAULT: withAlpha('--card'),
           foreground: withAlpha('--card-foreground'),
         },
+        /* Scrim — modal/dialog backdrop (black-based in both themes) */
+        scrim: withAlpha('--scrim'),
         /* Text helpers */
         'text-body': withAlpha('--text-body'),
         'text-muted': withAlpha('--text-muted'),

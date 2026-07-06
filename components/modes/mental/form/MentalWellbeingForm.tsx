@@ -399,7 +399,7 @@ export function MentalWellbeingForm() {
       {insightMessages.length > 0 && (
         <div className="mb-8">
           <div className="rounded-lg border border-accent/25 bg-accent-soft p-5">
-            <h3 className="mb-2 text-base font-semibold text-terracotta-600">Insights as we go</h3>
+            <h3 className="mb-2 text-base font-semibold text-accent">Insights as we go</h3>
             <div className="space-y-2">
               {insightMessages.map((message, index) => (
                 <p key={index} className="text-sm text-text-body">
@@ -485,7 +485,7 @@ export function MentalWellbeingForm() {
                           onClick={() => setCurrentEmotion(emotion === 'Other' ? 'Other' : emotion)}
                           className={`cursor-pointer rounded-md border p-3 text-sm transition-colors duration-base ease-standard ${
                             currentEmotion === emotion
-                              ? 'border-accent bg-accent-soft text-terracotta-600'
+                              ? 'border-accent bg-accent-soft text-accent'
                               : 'border-border text-text-body hover:border-border-strong'
                           }`}
                         >

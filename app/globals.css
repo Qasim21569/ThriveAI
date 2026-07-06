@@ -118,6 +118,9 @@
   --mode-finance: var(--sage-500);
   --mode-mental: 169 104 63;
 
+  /* --- Scrim (modal/dialog backdrop — stays black-based in both themes) --- */
+  --scrim: 0 0 0;
+
   /* --- Radii (soft, consistent family) --- */
   --radius: 0.625rem; /* 10px — buttons/inputs */
   --radius-xs: 4px;
@@ -183,6 +186,9 @@
   --border-strong: 64 58 55;
   --input: 64 58 55;
   --ring: 232 130 58;
+
+  /* Scrim stays black-based in dark too */
+  --scrim: 0 0 0;
 
   /* Gold dark variant */
   --gold-50: 45 36 16;
@@ -288,12 +294,12 @@
   background: rgb(var(--surface-sunken));
 }
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--oat-400));
+  background: rgb(var(--border-strong));
   border-radius: 999px;
   border: 2px solid rgb(var(--surface-sunken));
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--coffee-300));
+  background: rgb(var(--border-strong));
 }
 
 /* A single quiet fade for content-enter; no parallax/bounce/scroll anim. */

@@ -13,7 +13,7 @@ interface PlaceholderScreenProps {
   title: string;
   description: string;
   Icon: LucideIcon;
-  /** Tailwind classes for the icon tint + soft background, e.g. "text-mode-career bg-coffee-50" */
+  /** Tailwind classes for the icon tint + soft background, e.g. "text-mode-career bg-accent-soft" */
   iconClass?: string;
   /** Auto-redirect target and delay (ms). Omit to disable. */
   redirectTo?: string;

@@ -65,7 +65,7 @@ export function AppNav() {
                 className={[
                   'rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-base ease-standard outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
                   active
-                    ? 'bg-primary-soft text-coffee-700'
+                    ? 'bg-primary-soft text-primary'
                     : 'text-text-muted hover:bg-muted hover:text-foreground',
                 ].join(' ')}
               >
@@ -151,7 +151,7 @@ export function AppNav() {
                 onClick={() => setMobileOpen(false)}
                 className={[
                   'rounded-md px-2 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
-                  pathname === l.href ? 'bg-primary-soft text-coffee-700' : 'text-text-body hover:bg-muted',
+                  pathname === l.href ? 'bg-primary-soft text-primary' : 'text-text-body hover:bg-muted',
                 ].join(' ')}
               >
                 {l.label}

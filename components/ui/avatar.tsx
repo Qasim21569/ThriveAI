@@ -31,7 +31,7 @@ function Avatar({
     <div
       data-slot="avatar"
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft font-medium text-coffee-700 select-none",
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-primary-soft font-medium text-primary select-none",
         sizeMap[size],
         className
       )}

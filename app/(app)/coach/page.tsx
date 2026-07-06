@@ -39,18 +39,27 @@ const ERROR_TEXT = "Sorry, I couldn't respond just now. Please try again.";
  * is a one-shot keyframe (<300ms) on a color property — sanctioned exception
  * (motion guidelines allow color transitions ≤180ms for CSS; this inline
  * animate sequence is equivalent in intent and fires exactly once).
+ *
+ * The pulse color is read from the computed --gold-50 CSS variable at mount so
+ * it adapts to both light and dark themes without hardcoded RGB triples.
  */
 function ActionChip({ content }: { content: string }) {
+  const [gold50, setGold50] = useState('rgb(246 237 214)');
+  useEffect(() => {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--gold-50').trim();
+    if (raw) setGold50(`rgb(${raw})`);
+  }, []);
+
   return (
     <div className="flex justify-start">
       {/* Motion rule: FadeIn is the outer entrance; the inner pulse animates
           backgroundColor from gold-50 to transparent once over 300ms. */}
       <motion.div
-        initial={{ opacity: 0, y: 6, backgroundColor: 'rgb(246 237 214)' }}
+        initial={{ opacity: 0, y: 6, backgroundColor: gold50 }}
         animate={{
           opacity: 1,
           y: 0,
-          backgroundColor: ['rgb(246 237 214)', 'rgb(246 237 214)', 'rgba(246,237,214,0)'],
+          backgroundColor: [gold50, gold50, 'rgba(0,0,0,0)'],
         }}
         transition={{
           opacity: { duration: 0.28, ease: [0.4, 0, 0.2, 1] },
