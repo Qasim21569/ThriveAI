@@ -465,7 +465,7 @@ export function MentalWellbeingForm() {
                     </p>
                     <p>
                       As we go through these questions, try to be as honest as possible. There are no
-                      &ldquo;right&rdquo; answers — just what&apos;s true for you right now.
+                      &ldquo;right&rdquo; answers, just what&apos;s true for you right now.
                     </p>
                   </div>
                 </div>

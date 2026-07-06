@@ -64,6 +64,13 @@ function WalkthroughController({ children }: { children: ReactNode }) {
 
     // Small delay so the page has rendered its target elements.
     const timer = setTimeout(() => {
+      // Only start when every step target exists in the DOM (a fresh account
+      // may not have a timeline yet, etc.) — a tour pointing at a missing
+      // element strands the user mid-walkthrough. Not marking done: it
+      // retries on a later visit once the page has its content.
+      const tour = walkthroughTours.find((t) => t.tour === tourName);
+      const allTargetsPresent = tour?.steps.every((s) => document.querySelector(s.selector));
+      if (!allTargetsPresent) return;
       startedRef.current = pathname;
       startOnborda(tourName);
     }, 400);

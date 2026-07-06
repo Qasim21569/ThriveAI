@@ -98,7 +98,7 @@ export default function BrainPage() {
           <PageHeader
             eyebrow="Brain"
             title="What your mentor knows"
-            sub="Everything here was learned from your conversations and check-ins. Correct anything — your edits win."
+            sub="Everything here was learned from your conversations and check-ins. Correct anything. Your edits win."
           />
         </div>
 

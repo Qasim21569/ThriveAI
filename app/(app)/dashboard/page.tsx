@@ -115,7 +115,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3">
                   <Sparkles className="size-5 flex-shrink-0 text-accent" />
                   <p className="text-sm text-text-body">
-                    Your mentor doesn&apos;t know you yet — a five-minute intro changes everything.
+                    Your mentor doesn&apos;t know you yet. A five-minute intro changes everything.
                   </p>
                 </div>
                 <Button asChild variant="primary">
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="mb-4 text-sm text-text-body">
-                    Advice, decisions, or just a check-in — it knows your whole picture.
+                    Advice, decisions, or just a check-in. It knows your whole picture.
                   </p>
                   <Button asChild variant="accent" className="w-full">
                     <Link href="/coach">Open chat</Link>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
                 <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-10 text-center">
                   <p className="mb-1 text-sm font-medium text-foreground">Nothing logged yet</p>
                   <p className="text-sm text-text-muted">
-                    Tell your coach about a workout or how you&apos;re feeling — it will show up here.
+                    Tell your coach about a workout or how you&apos;re feeling, and it will show up here.
                   </p>
                 </div>
               ) : (

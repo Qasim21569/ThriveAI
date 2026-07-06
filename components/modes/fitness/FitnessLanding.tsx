@@ -13,11 +13,11 @@ const STEPS: { title: string; desc: string }[] = [
   },
   {
     title: 'Define your goals',
-    desc: 'Tell us what you want to achieve — weight loss, muscle gain, endurance, flexibility, or sport performance. Be as specific as you like.',
+    desc: 'Tell us what you want to achieve: weight loss, muscle gain, endurance, flexibility, or sport performance. Be as specific as you like.',
   },
   {
     title: 'Set your schedule',
-    desc: 'Share your weekly availability — how many days you can train and for how long — so your plan fits your real life.',
+    desc: 'Share your weekly availability, how many days you can train and for how long, so your plan fits your real life.',
   },
   {
     title: 'Receive your custom plan',
@@ -37,7 +37,7 @@ const FitnessLanding = () => {
           Your personal fitness coach
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-text-body">
-          A coach that adapts to your goals, schedule, and preferences — and evolves as you make
+          A coach that adapts to your goals, schedule, and preferences, and evolves as you make
           progress.
         </p>
       </div>
@@ -48,7 +48,7 @@ const FitnessLanding = () => {
         <div className="mt-4 space-y-3 text-text-body">
           <p>
             Fitness coaching creates a customized plan based on your profile, goals, and
-            preferences — not a generic template.
+            preferences, not a generic template.
           </p>
           <p>
             Your coach analyzes your specific needs, adapts to your progress, and provides guidance

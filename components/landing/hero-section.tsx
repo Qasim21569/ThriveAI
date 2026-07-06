@@ -97,7 +97,7 @@ export const HeroSection = () => {
             transition={{ duration: STEP, ease: EASE, delay: LINE_BASE_DELAY + LINE_STAGGER + STEP }}
           >
             Tell it about your life once. It builds a persistent memory across career, health,
-            finances, mental wellbeing, and relationships — then gives you advice that compounds
+            finances, mental wellbeing, and relationships, then gives you advice that compounds
             because it actually knows your history.
           </motion.p>
 
@@ -164,12 +164,12 @@ export const HeroSection = () => {
             </div>
             <div className="flex flex-col gap-2.5">
               <Bubble who="coach">
-                Morning, Jordan. You mentioned your sleep has been rough this week — I pushed
+                Morning, Jordan. You mentioned your sleep has been rough this week, so I pushed
                 your cardio session to Thursday and added a wind-down reminder tonight.
               </Bubble>
               <Bubble who="me">You remembered that from last check-in?</Bubble>
               <Bubble who="coach">
-                Always. That&apos;s the point — your context never resets.
+                Always. That&apos;s the point: your context never resets.
               </Bubble>
             </div>
           </div>

@@ -18,7 +18,7 @@ const AREAS = [
   {
     label: 'Health',
     tone: 'success' as const,
-    status: 'Sleep improved after cutting screens at 10 pm. Knee still tender — low-impact only.',
+    status: 'Sleep improved after cutting screens at 10 pm. Knee still tender, so low-impact only.',
   },
   {
     label: 'Mental',
@@ -76,7 +76,7 @@ export const ProductMockSection = () => {
           Your Brain page. Your mentor&apos;s memory.
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-text-muted">
-          Everything ThriveAI knows about you lives on the Brain page — visible, editable, and
+          Everything ThriveAI knows about you lives on the Brain page: visible, editable, and
           always in the mentor&apos;s voice. Nothing happens in a black box.
         </p>
       </motion.div>
@@ -132,7 +132,7 @@ export const ProductMockSection = () => {
           {/* context chip */}
           <div className="rounded-lg border border-border bg-surface-sunken px-4 py-3">
             <p className="text-xs text-text-muted">
-              <span className="font-medium text-text-body">Mentor&apos;s context</span> — drawn
+              <span className="font-medium text-text-body">Mentor&apos;s context,</span> drawn
               from Jordan&apos;s Brain page
             </p>
             <MentorVoice className="mt-1 block text-sm">
@@ -157,7 +157,7 @@ export const ProductMockSection = () => {
                 I bombed a practice problem today. Feeling really off about Friday.
               </Bubble>
               <Bubble who="coach">
-                That&apos;s a hard feeling — especially with the stakes. You&apos;ve been under
+                That&apos;s a hard feeling, especially with the stakes. You&apos;ve been under
                 elevated stress this month, and your sleep only stabilised recently, so your
                 cognitive headroom is thinner than usual right now.
               </Bubble>
@@ -167,7 +167,7 @@ export const ProductMockSection = () => {
               </Bubble>
               <Bubble who="me">That actually helps. What should I do tonight?</Bubble>
               <Bubble who="coach">
-                Protect the sleep you&apos;ve worked to fix. No hard prep after 9 pm — light
+                Protect the sleep you&apos;ve worked to fix. No hard prep after 9 pm, light
                 review only. The compounding from consistent rest will do more for Friday than
                 one late cram session.
               </Bubble>
@@ -175,7 +175,7 @@ export const ProductMockSection = () => {
           </div>
 
           <p className="text-center text-xs text-text-muted">
-            The mentor connected sleep, stress, and the interview — because it knows all three.
+            The mentor connected sleep, stress, and the interview, because it knows all three.
           </p>
         </motion.div>
       </div>

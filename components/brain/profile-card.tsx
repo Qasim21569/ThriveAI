@@ -9,9 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { MentorVoice } from '@/components/ui/mentor-voice';
 
 const FIELDS: { key: keyof Profile; label: string; placeholder: string }[] = [
-  { key: 'identity', label: 'Who you are', placeholder: 'Not captured yet — the mentor learns this as you talk.' },
+  { key: 'identity', label: 'Who you are', placeholder: 'Not captured yet. The mentor learns this as you talk.' },
   { key: 'personality', label: 'Personality', placeholder: 'Not captured yet.' },
-  { key: 'coachingStyle', label: 'How you like to be coached', placeholder: 'Not captured yet — tell the mentor how to talk to you.' },
+  { key: 'coachingStyle', label: 'How you like to be coached', placeholder: 'Not captured yet. Tell the mentor how to talk to you.' },
 ];
 
 export function ProfileCard({ profile, onSave }: { profile: Profile; onSave: (p: Profile) => Promise<void> }) {

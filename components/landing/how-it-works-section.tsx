@@ -14,12 +14,12 @@ const STEPS = [
   {
     number: '02',
     title: '2-minute daily check-ins keep it current',
-    desc: 'Each day, a quick check-in updates your memory with what actually happened — not just what you planned. Did the workout happen? How was your sleep? Your mentor learns from the real you, not an idealized version.',
+    desc: 'Each day, a quick check-in updates your memory with what actually happened, not just what you planned. Did the workout happen? How was your sleep? Your mentor learns from the real you, not an idealized version.',
   },
   {
     number: '03',
     title: 'Advice that compounds because it remembers',
-    desc: "Unlike a generic AI chatbot that forgets you between sessions, ThriveAI's advice gets sharper over time. It connects dots across areas — noticing that your sleep affects your focus, or that your stress is tied to a financial deadline — and adjusts accordingly.",
+    desc: "Unlike a generic AI chatbot that forgets you between sessions, ThriveAI's advice gets sharper over time. It connects dots across areas, noticing that your sleep affects your focus or that your stress is tied to a financial deadline, and adjusts accordingly.",
   },
 ];
 

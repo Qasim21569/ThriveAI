@@ -10,17 +10,17 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   {
     Icon: Brain,
     title: 'Persistent memory',
-    desc: 'ThriveAI remembers what you share — across sessions, across weeks, across life areas. Your context never resets.',
+    desc: 'ThriveAI remembers what you share, across sessions, across weeks, across life areas. Your context never resets.',
   },
   {
     Icon: Globe,
     title: 'Whole-life view',
-    desc: 'Career, health, mental wellbeing, finances, relationships — one mentor that sees all five together, not five separate apps.',
+    desc: 'Career, health, mental wellbeing, finances, relationships: one mentor that sees all five together, not five separate apps.',
   },
   {
     Icon: CheckCircle,
     title: 'Built-in accountability',
-    desc: 'Daily check-ins take 2 minutes and keep your memory current. Your mentor notices when you slip — and helps you recover without judgment.',
+    desc: 'Daily check-ins take 2 minutes and keep your memory current. Your mentor notices when you slip and helps you recover without judgment.',
   },
 ];
 

@@ -119,7 +119,7 @@ export function AreaCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {isEmpty && !editing ? (
-          <p className="text-sm text-text-muted">Nothing here yet — mention this part of your life to the mentor.</p>
+          <p className="text-sm text-text-muted">Nothing here yet. Mention this part of your life to the mentor.</p>
         ) : (
           <>
             <div>
@@ -129,7 +129,7 @@ export function AreaCard({
               ) : (
                 area.status
                   ? <MentorVoice className="block text-sm">{area.status}</MentorVoice>
-                  : <span className="text-sm text-text-muted">—</span>
+                  : <span className="text-sm text-text-muted">Not set</span>
               )}
             </div>
 

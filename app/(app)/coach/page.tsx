@@ -189,11 +189,11 @@ export default function CoachPage() {
             finalText = text ? `${text}\n\n${confirmation}` : confirmation;
           } catch (error) {
             console.error('Failed to save check-in:', error);
-            finalText = text || "I tried to log that but couldn't save it — please try again.";
+            finalText = text || "I tried to log that but couldn't save it. Please try again.";
           }
         } else {
           console.error('Tool call arguments failed client-side validation:', parsed.error.flatten());
-          finalText = text || "I couldn't quite understand what to log — could you rephrase?";
+          finalText = text || "I couldn't quite understand what to log. Could you rephrase?";
         }
       }
 
@@ -290,7 +290,7 @@ export default function CoachPage() {
         <h1 className="font-serif text-lg font-semibold text-foreground">Thrive Mentor</h1>
         <p className="text-xs text-text-muted">
           <MentorVoice>
-            {hasModel ? 'Knows your goals, history, and whole picture' : 'Getting to know you — just start talking'}
+            {hasModel ? 'Knows your goals, history, and whole picture' : 'Getting to know you. Just start talking'}
           </MentorVoice>
         </p>
       </div>
@@ -334,14 +334,18 @@ export default function CoachPage() {
               Streaming updates content via setMessages map (no key change → no remount →
               the FadeIn does not re-fire during streaming). Text inside is never animated. */}
           {messages.map((m) => {
-            const isAction = m.role === 'assistant' && m.content.includes('✓ Logged');
+            // A logged check-in appends "✓ Logged (…)" to the reply. Render the
+            // reply as a normal bubble and ONLY the confirmation line as a chip,
+            // instead of swallowing the whole message into the chip style.
+            const logIndex = m.role === 'assistant' ? m.content.indexOf('✓ Logged') : -1;
+            const replyText = logIndex === -1 ? m.content : m.content.slice(0, logIndex).trim();
+            const logText = logIndex === -1 ? null : m.content.slice(logIndex).trim();
             return (
               <FadeIn key={m.id}>
-                {isAction ? (
-                  <ActionChip content={m.content} />
-                ) : (
-                  <ChatBubble role={m.role} content={m.content} />
-                )}
+                <div className="flex flex-col gap-2">
+                  {replyText && <ChatBubble role={m.role} content={replyText} />}
+                  {logText && <ActionChip content={logText} />}
+                </div>
               </FadeIn>
             );
           })}

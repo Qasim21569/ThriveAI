@@ -26,7 +26,7 @@ export const walkthroughTours: Tour[] = [
         content: (
           <p>
             These questions are tailored to what your mentor already knows about you. You
-            don&apos;t need to answer all of them — one honest sentence is enough.
+            don&apos;t need to answer all of them. One honest sentence is enough.
           </p>
         ),
         selector: '#wt-today-prompts',
@@ -56,7 +56,7 @@ export const walkthroughTours: Tour[] = [
         content: (
           <p>
             This counts the days you&apos;ve checked in. Consistency matters more than
-            perfection — every day you show up counts.
+            perfection. Every day you show up counts.
           </p>
         ),
         selector: '#wt-today-streak',

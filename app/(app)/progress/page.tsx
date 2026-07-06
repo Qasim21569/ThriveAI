@@ -181,7 +181,7 @@ export default function ProgressPage() {
                 <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken px-6 py-12 text-center">
                   <p className="mb-1 text-sm font-medium text-foreground">No check-ins yet</p>
                   <p className="text-sm text-text-muted">
-                    Tell your coach about a workout or how you&apos;re feeling — it will show up here.
+                    Tell your coach about a workout or how you&apos;re feeling, and it will show up here.
                   </p>
                 </div>
               ) : (

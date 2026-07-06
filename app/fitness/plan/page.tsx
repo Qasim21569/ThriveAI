@@ -810,7 +810,7 @@ export default function FitnessPlanPage() {
                               ))}
                             </ul>
                           ) : (
-                            <p className="text-sm text-text-muted">Rest day — no workouts scheduled.</p>
+                            <p className="text-sm text-text-muted">Rest day. No workouts scheduled.</p>
                           )}
                         </div>
 

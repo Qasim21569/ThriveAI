@@ -389,7 +389,7 @@ export function FitnessForm() {
                     dietPreference: 'non-vegetarian',
                     injuries: 'None',
                     healthConditions: 'None',
-                    additionalInfo: 'Testing the app — sample data.',
+                    additionalInfo: 'Testing the app, sample data.',
                   });
                   setActiveTab('health');
                 }}

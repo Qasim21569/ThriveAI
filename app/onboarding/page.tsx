@@ -37,7 +37,7 @@ const AREA_LABEL: Record<string, string> = {
 const WELCOME_CARDS = [
   {
     heading: 'A mentor that actually knows you',
-    body: "Most advice fails because it's generic. ThriveAI remembers everything you share — your goals, your blocks, your wins — and brings that memory to every conversation.",
+    body: "Most advice fails because it's generic. ThriveAI remembers everything you share: your goals, your blocks, your wins, and it brings that memory to every conversation.",
     eyebrow: 'Welcome',
   },
   {
@@ -86,7 +86,7 @@ export default function OnboardingPage() {
   // Seeds intro bubbles and transitions to interview phase
   const beginInterview = () => {
     setBubbles([
-      { id: 'intro', role: 'mentor', text: "Hi — I'm your mentor. Five quick questions so I actually know you, then we're done. Nothing is shared; you can correct anything later." },
+      { id: 'intro', role: 'mentor', text: "Hi, I'm your mentor. Five quick questions so I actually know you, then we're done. Nothing is shared; you can correct anything later." },
       { id: 'q0', role: 'mentor', text: INTERVIEW_QUESTIONS[0].question },
     ]);
     setPhase('interview');
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
             <h2 className="mb-1 font-serif text-[30px] leading-tight tracking-[-0.015em] text-foreground md:text-[36px]">
               Here&apos;s my picture of you
             </h2>
-            <p className="mb-6 text-sm text-text-muted">Correct anything — your edits always win.</p>
+            <p className="mb-6 text-sm text-text-muted">Correct anything. Your edits always win.</p>
             {seededModel.profile.identity && (
               <div className="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3">
                 <MentorVoice rule className="block text-sm leading-relaxed">
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
             </Stagger>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button variant="primary" className="flex-1" onClick={() => router.push('/today')}>
-                Looks right — let&apos;s go <ArrowRight className="size-4" />
+                Looks right, let&apos;s go <ArrowRight className="size-4" />
               </Button>
               <Button variant="outline" className="flex-1" onClick={() => router.push('/brain')}>
                 <Pencil className="size-4" /> Fix something
@@ -365,7 +365,7 @@ export default function OnboardingPage() {
           <div className="max-w-md text-center">
             <p className="mb-2 font-serif text-lg text-foreground">I&apos;ll learn as we go</p>
             <p className="mb-6 text-sm text-text-muted">
-              I couldn&apos;t finish building your picture just now, but everything you shared is safe —
+              I couldn&apos;t finish building your picture just now, but everything you shared is safe.
               I&apos;ll pick it up from our conversations.
             </p>
             <Button variant="primary" onClick={() => router.push('/today')}>

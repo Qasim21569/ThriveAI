@@ -23,7 +23,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { MentorVoice } from '@/components/ui/mentor-voice';
 import { FadeIn } from '@/components/motion/fade-in';
 
-const FALLBACK_REACTION = 'Logged. Showing up daily is the whole game — see you tomorrow.';
+const FALLBACK_REACTION = 'Logged. Showing up daily is the whole game. See you tomorrow.';
 
 export default function TodayPage() {
   const router = useRouter();
@@ -204,7 +204,7 @@ export default function TodayPage() {
               <Textarea
                 value={entry}
                 onChange={(e) => setEntry(e.target.value)}
-                placeholder="Write it however it comes out — a sentence is enough."
+                placeholder="Write it however it comes out. A sentence is enough."
                 className="min-h-[140px]"
                 disabled={submitting}
                 autoFocus
@@ -220,12 +220,12 @@ export default function TodayPage() {
             </Button>
             {saveError && (
               <p className="mt-3 text-center text-xs text-destructive">
-                Couldn&apos;t save your check-in — check your connection and try again.
+                Couldn&apos;t save your check-in. Check your connection and try again.
               </p>
             )}
             {loggedToday && (
               <p className="mt-3 text-center text-xs text-text-muted">
-                Already logged today — this adds to it.
+                Already logged today. This adds to it.
               </p>
             )}
           </>

@@ -82,7 +82,7 @@ const MentalLanding = () => {
             and practical solutions.
           </p>
           <p>
-            This isn&apos;t a diagnostic tool — it&apos;s a gateway to self-awareness. Your data is
+            This isn&apos;t a diagnostic tool. It&apos;s a gateway to self-awareness. Your data is
             handled with care and privacy.
           </p>
         </div>

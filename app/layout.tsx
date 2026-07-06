@@ -5,7 +5,7 @@ import { Providers } from './providers';
 
 // Metadata for the app
 export const metadata: Metadata = {
-  title: 'ThriveAI — Elevate your potential',
+  title: 'ThriveAI: Elevate your potential',
   description:
     'Your personal AI-powered life coach for fitness, career, finances, and mental wellbeing.',
 };
