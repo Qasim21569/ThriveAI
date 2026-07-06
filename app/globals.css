@@ -299,7 +299,7 @@
   border: 2px solid rgb(var(--surface-sunken));
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--border-strong));
+  background: rgb(var(--text-muted));
 }
 
 /* A single quiet fade for content-enter; no parallax/bounce/scroll anim. */
