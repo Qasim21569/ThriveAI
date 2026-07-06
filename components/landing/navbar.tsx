@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const NAV_LINKS = [
-  { label: 'Home', href: '/#hero' },
+  { label: 'How it works', href: '/#how-it-works' },
   { label: 'Features', href: '/#features' },
 ];
 
