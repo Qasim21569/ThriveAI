@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { Logo } from '@/components/ui/logo';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { User, Settings, LogOut, Menu, X, LayoutDashboard, TrendingUp } from 'lucide-react';
@@ -51,8 +52,7 @@ export function AppNav() {
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-content items-center justify-between px-6 py-3">
         <Link href="/today" className="flex items-center" aria-label="ThriveAI home">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/thriveai-logo.svg" width={150} height={28} alt="ThriveAI" />
+          <Logo />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

@@ -28,7 +28,8 @@ function buildSystemPrompt(contextBlock?: string): string {
     'help for anything beyond general guidance. When the user reports something concrete — ' +
     'a workout, a mood, an event worth remembering — call the log_checkin tool rather than ' +
     'only acknowledging it in text. Never call log_checkin for greetings, questions, or ' +
-    'small talk that contains no concrete happening to record.';
+    'small talk that contains no concrete happening to record. Never use em dashes in ' +
+    'your replies; use commas, periods, or parentheses instead.';
 
   if (!contextBlock) {
     return `${identity}\n\nYou are meeting this user for the first time and know nothing about them yet. Ask about their current situation to start building the picture.`;

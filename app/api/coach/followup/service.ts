@@ -24,7 +24,8 @@ export async function getFollowupQuestion(
     'answer already covers the essentials (their current situation plus at least one goal ' +
     'or concern), reply with exactly the single word DONE. Otherwise reply with exactly ' +
     'one short, warm follow-up question (one sentence, no preamble) that fills the ' +
-    'biggest gap. Never ask more than one question. Never comment on the answer.';
+    'biggest gap. Never ask more than one question. Never comment on the answer. ' +
+    'Never use em dashes; use commas or periods instead.';
 
   const response = await fetch(GROQ_URL, {
     method: 'POST',

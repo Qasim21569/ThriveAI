@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Logo } from '@/components/ui/logo';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
@@ -60,8 +61,7 @@ export const Navbar = () => {
     >
       <div className="mx-auto flex max-w-content items-center justify-between px-6 py-3.5">
         <Link href="/" aria-label="ThriveAI home" className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/thriveai-logo.svg" width={168} height={32} alt="ThriveAI" />
+          <Logo />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

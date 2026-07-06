@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Logo } from '@/components/ui/logo';
 
 export default function AuthLayout({
   children,
@@ -12,8 +13,7 @@ export default function AuthLayout({
       {/* Logo in top left */}
       <div className="absolute left-6 top-6 z-10">
         <Link href="/" aria-label="ThriveAI home">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/thriveai-logo.svg" width={156} height={30} alt="ThriveAI" />
+          <Logo />
         </Link>
       </div>
 

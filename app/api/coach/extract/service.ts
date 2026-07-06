@@ -29,7 +29,8 @@ Rules:
 - Close a thread/goal ONLY by an id that exists in the provided Life Model.
 - Set profile.coachingStyle only on clear signals about how the user wants to be coached (e.g. "stop sugarcoating").
 - Do not restate things already present in the Life Model.
-- Omit optional fields entirely when you have nothing for them — never output empty strings.`;
+- Omit optional fields entirely when you have nothing for them — never output empty strings.
+- Never use em dashes in any text field (statuses, summaries, events, profile); use commas or periods.`;
 
 /**
  * Models sometimes emit "" for optional fields instead of omitting them.

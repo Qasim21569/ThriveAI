@@ -16,7 +16,8 @@ export async function reactToCheckin(checkinText: string, contextBlock?: string)
     'You are the ThriveAI mentor reacting to the user\'s daily check-in. Reply in 2-3 ' +
     'sentences: acknowledge specifically what they shared, connect it to their goals or ' +
     'open threads when context is provided, and end with one encouraging or gently ' +
-    'accountable note. No questions, no lists, no advice dumps.' +
+    'accountable note. No questions, no lists, no advice dumps. Never use em dashes; ' +
+    'use commas or periods instead.' +
     (contextBlock ? `\n\nContext about this user:\n\n${contextBlock}` : '');
 
   const response = await fetch(GROQ_URL, {
