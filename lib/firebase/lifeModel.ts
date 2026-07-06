@@ -6,6 +6,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  deleteDoc,
   query,
   orderBy,
   limit,
@@ -84,6 +85,25 @@ export async function addEvents(uid: string, events: LifeEvent[]): Promise<void>
       }),
     ),
   );
+}
+
+/**
+ * Reset the life model for a user — deletes the 6 lifeModel docs (profile +
+ * 5 areas) and all docs in users/{uid}/events. Check-ins, messages, and plans
+ * are left untouched so the brain can re-learn from the kept history.
+ */
+export async function resetLifeModel(uid: string): Promise<void> {
+  // Delete the 6 lifeModel documents in parallel
+  const lifeModelDocIds = ['profile', ...LIFE_AREAS] as const;
+  await Promise.all(
+    lifeModelDocIds.map((docId) =>
+      deleteDoc(doc(db, 'users', uid, 'lifeModel', docId)),
+    ),
+  );
+
+  // Delete all events documents via getDocs + deleteDoc batch
+  const eventsSnap = await getDocs(collection(db, 'users', uid, 'events'));
+  await Promise.all(eventsSnap.docs.map((d) => deleteDoc(d.ref)));
 }
 
 export async function getRecentEvents(uid: string, take = 30): Promise<LifeEvent[]> {
