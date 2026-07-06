@@ -8,6 +8,7 @@ import { User, Settings, LogOut, Menu, X, LayoutDashboard, TrendingUp } from 'lu
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { useAuth } from '@/lib/firebase/authContext';
 import { Avatar } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const NAV_LINKS = [
   { label: 'Today', href: '/today' },
@@ -74,7 +75,9 @@ export function AppNav() {
           })}
         </nav>
 
-        <div className="relative hidden md:block" ref={menuRef}>
+        <div className="hidden items-center gap-1 md:flex">
+          <ThemeToggle />
+          <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -126,6 +129,7 @@ export function AppNav() {
               </button>
             </div>
           )}
+          </div>
         </div>
 
         <button
@@ -188,6 +192,10 @@ export function AppNav() {
               >
                 Sign out
               </button>
+              <div className="flex items-center gap-2 px-2 py-1">
+                <span className="text-xs text-text-muted">Theme</span>
+                <ThemeToggle />
+              </div>
             </div>
           </nav>
         </div>

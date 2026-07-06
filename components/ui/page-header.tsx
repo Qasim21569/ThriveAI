@@ -37,7 +37,7 @@ function PageHeader({ eyebrow, title, sub, children, className }: PageHeaderProp
         ) : null}
         <h1
           className={cn(
-            "font-serif font-semibold tracking-[-0.015em] text-foreground",
+            "font-serif font-normal tracking-[-0.015em] text-foreground",
             "text-3xl md:text-4xl"
           )}
         >

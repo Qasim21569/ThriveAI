@@ -7,6 +7,7 @@ import { Menu, X } from 'lucide-react';
 import { auth } from '@/lib/firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const NAV_LINKS = [
   { label: 'Home', href: '/#hero' },
@@ -76,6 +77,7 @@ export const Navbar = () => {
         </nav>
 
         <div className="hidden items-center gap-2.5 md:flex">
+          <ThemeToggle />
           {isLoggedIn ? (
             <>
               <span className="text-sm text-text-muted">
@@ -129,6 +131,10 @@ export const Navbar = () => {
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
+              <div className="flex items-center gap-2 px-2 py-1">
+                <span className="text-xs text-text-muted">Theme</span>
+                <ThemeToggle />
+              </div>
               {isLoggedIn ? (
                 <>
                   <Button asChild variant="secondary" size="default">

@@ -3,16 +3,15 @@
 @tailwind utilities;
 
 /* ============================================================
-   ThriveAI — Warm, calm design system
-   Cream/oat backgrounds, coffee-brown primary, terracotta accent,
-   charcoal text. No pure white/black. No gradients, no glow, no glass.
+   ThriveAI — SaaS-neutral design system v2
+   Stone-family light palette with dark mode (class strategy).
    Colors are stored as space-separated RGB triples so Tailwind can
    apply alpha via rgb(var(--token) / <alpha-value>).
    ============================================================ */
 :root {
   /* --- Type families (loaded via <link> in app/layout.tsx) --- */
-  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
   /* --- Base neutrals (warm oat scale) --- */
@@ -48,6 +47,7 @@
   /* --- Gold (streak / celebration) --- */
   --gold-500: 178 128 26;
   --gold-50: 246 237 214;
+  /* gold-50 dark variant defined in .dark block */
 
   /* --- Semantic status hues --- */
   --sage-500: 110 124 90;
@@ -61,45 +61,46 @@
   /* ============================================================
      Semantic aliases (shadcn token names) — reference these, not
      the raw scale, in components.
+     v2: Stone-family SaaS-neutral light palette.
      ============================================================ */
-  --background: var(--oat-150);
-  --foreground: var(--ink-900);
+  --background: 250 250 249;
+  --foreground: 28 25 23;
 
-  --surface: var(--oat-50);
-  --surface-raised: var(--oat-100);
-  --surface-sunken: var(--oat-200);
+  --surface: 255 255 255;
+  --surface-raised: 255 255 255;
+  --surface-sunken: 245 245 244;
 
-  --card: var(--oat-50);
-  --card-foreground: var(--ink-900);
-  --popover: var(--oat-50);
-  --popover-foreground: var(--ink-900);
+  --card: 255 255 255;
+  --card-foreground: 28 25 23;
+  --popover: 255 255 255;
+  --popover-foreground: 28 25 23;
 
-  --primary: var(--coffee-500);
-  --primary-foreground: 251 249 245;
-  --primary-hover: var(--coffee-600);
-  --primary-active: var(--coffee-700);
-  --primary-soft: var(--coffee-50);
+  --primary: 28 25 23;
+  --primary-foreground: 250 250 249;
+  --primary-hover: 41 37 36;
+  --primary-active: 41 37 36;
+  --primary-soft: 245 245 244;
 
-  --secondary: var(--oat-100);
-  --secondary-foreground: var(--ink-900);
+  --secondary: 245 245 244;
+  --secondary-foreground: 28 25 23;
 
-  /* Brand accent = terracotta. (shadcn's neutral hover fill uses --muted.) */
-  --accent: var(--terracotta-500);
-  --accent-foreground: 251 249 245;
-  --accent-hover: var(--terracotta-600);
-  --accent-soft: var(--terracotta-50);
+  /* Brand accent = ember orange. (shadcn's neutral hover fill uses --muted.) */
+  --accent: 194 87 27;
+  --accent-foreground: 250 250 249;
+  --accent-hover: 166 70 20;
+  --accent-soft: 251 240 233;
 
-  --muted: var(--oat-200);
-  --muted-foreground: var(--ink-500);
+  --muted: 245 245 244;
+  --muted-foreground: 120 113 108;
 
-  --text-body: var(--ink-700);
-  --text-muted: var(--ink-500);
-  --text-placeholder: var(--ink-400);
+  --text-body: 68 64 60;
+  --text-muted: 120 113 108;
+  --text-placeholder: 168 162 158;
 
-  --border: var(--oat-300);
-  --border-strong: var(--oat-400);
-  --input: var(--oat-400);
-  --ring: var(--terracotta-500);
+  --border: 231 229 228;
+  --border-strong: 214 211 209;
+  --input: 214 211 209;
+  --ring: 194 87 27;
 
   --success: var(--sage-500);
   --success-foreground: 251 249 245;
@@ -140,6 +141,60 @@
   --duration-slow: 280ms;
 }
 
+/* ============================================================
+   Dark mode — class strategy (html.dark)
+   Only semantic aliases are redefined here; raw scales unchanged.
+   ============================================================ */
+.dark {
+  --background: 19 17 16;
+  --foreground: 245 245 244;
+
+  --surface: 28 25 23;
+  --surface-raised: 35 31 30;
+  --surface-sunken: 15 14 13;
+
+  --card: 28 25 23;
+  --card-foreground: 245 245 244;
+  --popover: 28 25 23;
+  --popover-foreground: 245 245 244;
+
+  --primary: 245 245 244;
+  --primary-foreground: 19 17 16;
+  --primary-hover: 214 211 209;
+  --primary-active: 214 211 209;
+  --primary-soft: 35 31 30;
+
+  --secondary: 35 31 30;
+  --secondary-foreground: 245 245 244;
+
+  --accent: 232 130 58;
+  --accent-foreground: 19 17 16;
+  --accent-hover: 194 87 27;
+  --accent-soft: 51 32 20;
+
+  --muted: 35 31 30;
+  --muted-foreground: 168 162 158;
+
+  --text-body: 214 211 209;
+  --text-muted: 168 162 158;
+  --text-placeholder: 120 113 108;
+
+  --border: 46 42 40;
+  --border-strong: 64 58 55;
+  --input: 64 58 55;
+  --ring: 232 130 58;
+
+  /* Gold dark variant */
+  --gold-50: 45 36 16;
+
+  /* Raised shadows need slightly more opacity to read on dark */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.20);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.20);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.22);
+  --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.40), 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -157,10 +212,11 @@
     min-height: 100vh;
   }
 
-  /* Headlines use the warm serif; body/UI uses the sans by default. */
+  /* Headlines use the display serif; body/UI uses the sans by default.
+     Instrument Serif is 400-only — size & tracking carry hierarchy. */
   h1, h2, h3 {
     font-family: var(--font-serif);
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: -0.015em;
     color: rgb(var(--foreground));
   }
@@ -178,7 +234,7 @@
 @layer components {
   .ds-display {
     font-family: var(--font-serif);
-    font-weight: 600;
+    font-weight: 400;
     font-size: 56px;
     line-height: 1.05;
     letter-spacing: -0.02em;
@@ -196,12 +252,13 @@
 
   /**
    * Mentor's voice — applied to everything the AI knows or says about the user.
-   * Serif italic, ink-700 text. Recognizable as "the mentor's hand."
+   * Instrument Serif italic (400-only), text-body. Recognizable as "the mentor's hand."
    */
   .mentor-voice {
     font-family: var(--font-serif);
     font-style: italic;
-    color: rgb(var(--ink-700));
+    font-weight: 400;
+    color: rgb(var(--text-body));
     line-height: 1.6;
   }
 
@@ -212,7 +269,8 @@
   .mentor-voice-rule {
     font-family: var(--font-serif);
     font-style: italic;
-    color: rgb(var(--ink-700));
+    font-weight: 400;
+    color: rgb(var(--text-body));
     line-height: 1.6;
     border-left: 2px solid rgb(var(--accent));
     padding-left: 0.875rem;
