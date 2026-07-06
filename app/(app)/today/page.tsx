@@ -12,6 +12,7 @@ import { buildMentorContext } from '@/lib/coach/context';
 import { runExtraction } from '@/lib/coach/extraction-client';
 import { buildDailyPrompts } from '@/lib/checkins/prompts';
 import { computeStreak } from '@/lib/checkins/streak';
+import { celebrate, isStreakMilestone } from '@/lib/celebrate';
 import type { LifeModel } from '@/lib/lifemodel/types';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
@@ -85,7 +86,9 @@ export default function TodayPage() {
         return;
       }
       setLoggedToday(true);
-      setStreak((s) => (s === 0 ? 1 : s + (wasLoggedToday ? 0 : 1)));
+      const newStreak = streak === 0 ? 1 : streak + (wasLoggedToday ? 0 : 1);
+      setStreak(newStreak);
+      if (isStreakMilestone(newStreak)) celebrate('streak', newStreak);
 
       const idToken = await user.getIdToken();
       const checkinText = `Daily check-in.\nPrompts shown: ${prompts.join(' | ')}\nAnswer: ${text}`;

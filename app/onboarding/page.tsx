@@ -9,6 +9,7 @@ import { INTERVIEW_QUESTIONS, buildInterviewTranscript, type InterviewEntry } fr
 import { runExtraction } from '@/lib/coach/extraction-client';
 import { getLifeModel } from '@/lib/firebase/lifeModel';
 import { emptyLifeModel, LIFE_AREAS, type LifeModel } from '@/lib/lifemodel/types';
+import { celebrate } from '@/lib/celebrate';
 import AuthModal from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -79,6 +80,7 @@ export default function OnboardingPage() {
       if (outcome) {
         setSeededModel(outcome.model);
         setPhase('playback');
+        celebrate('onboarding');
       } else {
         setPhase('fallback');
       }
