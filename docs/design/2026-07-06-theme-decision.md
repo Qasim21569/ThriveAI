@@ -85,3 +85,14 @@ Every interactive primitive gets designed hover / focus-visible (2px `ring` offs
 Deferred (brief: optional). The alias architecture reserves space — no light-only
 hardcodes may be introduced (use semantic tokens only, never raw oat values in
 components).
+
+---
+
+## v2 (shipped 2026-07-06) — supersedes the palette/type tables above
+
+Owner rejected v1's restraint after visual review. Shipped direction:
+- **Palette:** SaaS-neutral stone family — near-white warm-gray light theme + full dark mode (class strategy, no-FOUC boot script, toggle in both navbars). Ink-primary buttons; single ember accent (194 87 27); gold retained for streaks; new --scrim token.
+- **Type:** Inter (UI/body) + Instrument Serif 400-only (display + mentor-voice italic; size/tracking carry hierarchy, never weight). Plex Mono eyebrows retained.
+- **Landing:** explain-the-product narrative (hero one-liner, 3-step how-it-works, HTML product mock, 3 features, inverted CTA panel).
+- **Onboarding:** 3-screen welcome flow precedes the interview.
+- Elevation ladder, motion system, and the mentor's-voice signature device carry over from v1 unchanged.
