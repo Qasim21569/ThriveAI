@@ -62,7 +62,7 @@ export function AppNav() {
                 key={l.href}
                 href={l.href}
                 className={[
-                  'rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-base ease-standard',
+                  'rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-base ease-standard outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
                   active
                     ? 'bg-primary-soft text-coffee-700'
                     : 'text-text-muted hover:bg-muted hover:text-foreground',
@@ -146,7 +146,7 @@ export function AppNav() {
                 href={l.href}
                 onClick={() => setMobileOpen(false)}
                 className={[
-                  'rounded-md px-2 py-2.5 text-sm',
+                  'rounded-md px-2 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
                   pathname === l.href ? 'bg-primary-soft text-coffee-700' : 'text-text-body hover:bg-muted',
                 ].join(' ')}
               >
@@ -157,28 +157,28 @@ export function AppNav() {
               <Link
                 href="/dashboard"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted"
+                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 Dashboard
               </Link>
               <Link
                 href="/progress"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted"
+                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 Progress
               </Link>
               <Link
                 href="/profile"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted"
+                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 Profile
               </Link>
               <Link
                 href="/settings"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted"
+                className="rounded-md px-2 py-2.5 text-sm text-text-body hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 Settings
               </Link>
